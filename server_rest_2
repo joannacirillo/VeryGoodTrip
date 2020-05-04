@@ -1,0 +1,219 @@
+const express = require('express');
+const body = require('body-parser');
+
+const mongoose = require('mongoose');
+const Schemes = require('./places'); // on importe le model
+
+mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser:true});
+
+
+let app = express();
+app.use(body());
+let port = 8080;
+
+app.listen(port, () => {
+    console.log('le serveur fonctionne')
+});
+
+//SNACKS SHOPPING CULTURE_SHOPS CULTURE HISTORICAL RELIGIOUS
+app.get('/:x_departure/:y_departure/:x_destination/:y_destination/:cluster/:type/:wheelchair', function(req, res) { // création de la route sous le verbe get
+    mongoose.set('debug', true);
+    type = null;
+    wheelchair=null;
+    //console.log(mongoose.connection.readyState);
+
+    if(req.params.cluster!="null"){
+        cluster = [req.params.cluster];
+    } else {
+        cluster = ["SNACKS","CULTURE_SHOPS","SHOPPING","RELIGIOUS"];
+    }
+
+    //Setting the property type (more specific type) for the request
+    if(req.params.type!="null"){
+        type = [req.params.type];
+    } else {
+        if(req.params.cluster=="SNACKS"){
+            type = ["bakery","sugar","ice_cream"]; //A finir !
+        } 
+        else if(req.params.cluster=="SHOPPING"){
+            type = ["shops","books","beauty","supermarket"];
+        } 
+        else if(req.params.cluster=="CULTURE_SHOPS"){
+            type = ["books","games","art"];
+        }
+        else if(req.params.cluster=="CULTURE"){
+            type = ["museum","archeological","art"];
+        } 
+        else if(req.params.cluster=="HISTORICAL"){
+            type = ["ruins","castel","archeological","tomb"];
+        }
+        else if(req.params.cluster=="RELIGIOUS"){
+            type = ["church","monastery","tomb","abey","place_of_worship"];
+        } else {
+            type = [];
+        }
+    }
+
+    if(req.params.cluster==null && req.params.type==null){
+        res.send("Spécifier le genre ou le type de lieu");
+    }
+
+    //Setting wether a wheelchair access is required in the request
+    if(req.params.wheelchair!="null"){
+        wheelchair = req.params.wheelchair;
+    }
+    array = ["yes"];
+    if(wheelchair == null || wheelchair=="no"){
+        array=array.concat([null,"no","limited"]);
+    } else if(wheelchair=="limited"){
+        array = ["limited","yes"];
+    }
+
+    //REQUEST
+    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
+    Schemes.find({"type" : cluster,"properties.type" : {"$in" : type}, "properties.wheelchair" : {"$in" : array},},
+    {"_id":0,"properties.type":1,"type" : 1},function(err, result){
+        if (err) throw err;
+        // //Setting points for the calculation
+        // result.forEach(function(doc){
+        //     if(document.type){
+
+        //     }
+        // });
+        //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
+        console.log(result);
+        res.send(result);
+    });
+});
+
+//EAT DRINK
+app.get('/:x_departure/:y_departure/:x_destination/:y_destination/:cluster/:type/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) {
+    mongoose.set('debug', true);
+    cluster = null;
+    type = null;
+    wheelchair=null;
+    //console.log(mongoose.connection.readyState);
+
+    if(req.params.cluster!="null"){
+        cluster = [req.params.cluster];
+    } else {
+        cluster = ["DRINK","EAT"];
+    }
+
+    //Setting the property type (more specific type) for the request
+    if(req.params.type!="null"){
+        type = [req.params.type];
+    } else {
+        if(req.params.cluster=="DRINK"){
+            type = ["bar","cafe","pub","bier_garten"];
+        } 
+        else if(req.params.cluster=="EAT"){
+            type  = ["cafe","restaurant","fast_food","food_court"];
+        } else {
+            type = [];
+        }
+    }
+
+    //Setting wether a wheelchair access is required in the request
+    if(req.params.wheelchair!="null"){
+        wheelchair = req.params.wheelchair;
+    }
+    array = ["yes"];
+    if(wheelchair == null || wheelchair=="no"){
+        array=array.concat([null,"no","limited"]);
+    } else if(wheelchair=="limited"){
+        array = ["limited","yes"];
+    }
+
+    //Setting the type of cuisine required
+    cuisine = null
+    if(req.params.cuisine!="null"){
+        cuisine=req.params.cuisine;
+    }
+
+    //Settting wether delivery is required
+    delivery=["yes","no",null];
+    if(req.params.delivery=="yes"){
+        delivery=[req.params.delivery];
+    }
+
+    //Setting wether takeaway is required
+    takeaway=["yes","no",null];
+    if(req.params.takeaway=="yes"){
+        takeaway=[req.params.takeaway];
+    }
+
+
+    //REQUEST
+    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
+    Schemes.find({"type" : {"$in" : cluster} , "properties.type" : {"$in" : type},
+    "properties.wheelchair" : {"$in" : array},"properties.cuisine" : cuisine,
+    "properties.delivery" : {"$in" : delivery},"properties.takeaway" : {"$in" : takeaway}},
+    {"_id":0,"properties.type":1,"type":1},function(err, result){
+        if (err) throw err;
+        // //Setting points for the calculation
+        // result.forEach(function(doc){
+        //     if(document.type){
+
+        //     }
+        // });
+        //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
+        console.log(result);
+        res.send(result);
+    });
+});
+
+//CITY
+app.get('/:x_departure/:y_departure/:x_destination/:y_destination/CITY/:type', function(req, res) { // création de la route sous le verbe get
+    mongoose.set('debug', true);
+    type = null;
+    //console.log(mongoose.connection.readyState);
+
+    //Setting the property type (more specific type) for the request
+    if(req.params.type!="null"){
+        type = [req.params.type];
+    } else {
+        type = ["buildings","bridges","gates","fountains","monument","memorial","square"];
+    }
+
+
+    //REQUEST
+    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
+    Schemes.find({"type" : "CITY","properties.type" : {"$in" : type}, "properties.wheelchair" : {"$in" : array},},
+    {"_id":0,"properties.type":1,"type" : 1},function(err, result){
+        if (err) throw err;
+        // //Setting points for the calculation
+        // result.forEach(function(doc){
+        //     if(document.type){
+
+        //     }
+        // });
+        //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
+        console.log(result);
+        res.send(result);
+    });
+});
+
+
+
+
+
+app.post('/', async (req, res) => {
+    // const  = req.body.titre;
+    // const auteur = req.body.auteur;
+    // const genre = req.body.genre;
+
+    // if (!genre || !auteur || !titre){
+    //     res.send('argument missing');
+    //     return
+    // }
+
+    const new_place = new Schemes({
+        type : "SNACKS"
+    })
+
+    await new_place.save() // sauvegarde asynchrone du nouveau livre
+    res.json(nouveau_livre)
+    return
+
+});
