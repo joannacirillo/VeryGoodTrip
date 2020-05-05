@@ -1,4 +1,4 @@
-var ap = app || {};
+var app = app || {};
 
 //--------------------------------------
 
@@ -13,13 +13,13 @@ app.Node = function (x, y, i=0) {
 //--------------------------------------
 
 var _private = {
-    // Euclidean distance
+    // Euclidean distance --> useful
     distanceE: function (current, target) {
         var dx = target.x - current.x, dy = target.y - current.y;
         return Math.sqrt((dx * dx) + (dy * dy));
     },
 
-    // Manhattan distance
+    // Manhattan distance 
     distanceM: function (current, target) {
         var dx = Math.abs(target.x - current.x), dy = Math.abs(target.y - current.y);
         return dx + dy;
@@ -42,20 +42,6 @@ app.map = {
         return this;
     },
 
-    blocked: function (target) {
-        if (_private.outOfBounds(target)) {
-            return true;
-        }
-
-        return false;
-    },
-
-    getNeighbors: function (target) {
-        console.log(this.data);
-        console.log("\n -------------------- \n");
-        return this.data;
-    },
-
     getCost: function (current_node, target_node) {
         return _private.distanceE(current_node, target_node);
     }
@@ -75,16 +61,8 @@ app.pathFinder = {
     // Available nodes 
     open: [],
 
-    // Nodes count
-    nb_nodes: 0,
-
     // Maximum time before shutting down a closed path
-    maxTime: 0,
     time: 0,
-
-    setMaxTime: function(t) {
-    	this.maxTime = t;
-    },
 
     addOpen: function (node, parent=null) {
     	node.parent = parent;
@@ -135,60 +113,33 @@ app.pathFinder = {
         return false;
     }, 
 
-    findPath: function (current_node, target_node, maxT) {
-        var current, // Current best open node
-            neighbors, // Dump of all nearby neighbor nodes
-            neighborTest, // Any pre-existing records of a neighbor
-            stepCost, // Dump of a total step score for a neighbor
-            i;
+    findPath: function (current_node, target_node, maxT) {     
+        var current,
+            best;
 
-        // You must add the starting node
-        this.reset().addOpen(current_node);
+        //Reset
+        this.reset();
 
-        console.log(this);
-        console.log("\n -------------------- \n");
+        //Initiate the first node
+        current = current_node;
 
-        while (this.open.length !== 0 || this.time < this.maxTime) {
-            current = this.getBestOpen();
-            console.log("current :"); console.log(current);
+        while(this.open.length !== 0 || this.time < maxT) {
+            best = this.getBestOpen();
+            console.log("best node is : " + best.x + " " + best.y);
+            best.parent = current;
 
-            // Check if goal has been discovered to build a path
-            if (current.x === target_node.x && current.y === target_node.y) {
-                return this.buildPath(current, []);
+            if(best.x === target_node.x && best.y === target_node.y)
+                return [this.buildPath(best, []), this.time + app.map.getCost(current,best)];
+
+            if(this.time + app.map.getCost(current, best) + app.map.getCost(best,target_node) <= maxT){
+                this.time += app.map.getCost(current,best);
+                console.log("new time is : " + this.time);
+                current = best;
             }
-
-            // Move current into closed set
-            this.removeOpen(current).addClosed(current);
-
-            // Get neighbors from the map and check them
-            neighbors = app.map.getNeighbors(current);
-            for (i = 0; i < neighbors.length; i++) {
-                // Get cost for a move
-                stepCost = app.map.getCost(current, neighbors[i]);
-
-                // Check for the neighbor in the closed set
-                neighborTest = this.inClosed(neighbors[i]);
-                if (neighborTest)
-                    continue;
-
-                // Verify neighbor doesn't exist or new score for it is better
-                neighborTest = this.inOpen(neighbors[i]);
-                if (!neighborTest) {
-                	if(neighbors[i] !== current){
-                    	this.addOpen(neighbors[i], current);
-                    	this.time += stepCost;
-                    	console.log("added node : time = " + this.time)
-                    }
-                } else {
-                    neighborTest.parent = current;
-                    neighborTest.nb_steps = current.nb_steps + 1;
-                    neighborTest.cost = stepCost;
-                }
-                
-            }
+            this.removeOpen(best);
         }
 
-        return false;
+
     },
 
     // Recursive path buliding method
@@ -204,7 +155,7 @@ app.pathFinder = {
 
     reset: function () {
         this.closed = [];
-        this.open = [];
+        this.open = app.map.data;
         this.time = 0;
         this.maxTime = 0;
         return this;
@@ -214,7 +165,7 @@ app.pathFinder = {
 //--------------------------------------
 
 n1= new app.Node(0,0,0);
-n2= new app.Node(1,1,1);
+n2= new app.Node(1,1,2);
 n3= new app.Node(5,6,10);
 n4= new app.Node(10,10,1);
 
@@ -222,11 +173,11 @@ n4= new app.Node(10,10,1);
 var main = {
     findPath: function () {
     	app.map.setData([n1, n2, n3, n4]);
-        app.pathFinder.setMaxTime(20);
-        var path = app.pathFinder.findPath(n1, n4);
+        var path = app.pathFinder.findPath(n1, n4, 30);
         console.log("Done");
         console.log(path);
     }
 };
 
 main.findPath();
+
