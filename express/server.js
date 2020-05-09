@@ -118,16 +118,15 @@ app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) 
     });
 });
 
-//CITY
-app.get('/CITY', function(req, res) { // création de la route sous le verbe get
+//CITY NATURE et sans précision
+app.get('/:cluster', function(req, res) {
     mongoose.set('debug', true);
-    type = null;
+    cluster = req.params.cluster;
     //console.log(mongoose.connection.readyState);
 
 
     //REQUEST
-    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    Schemes.find({"type" : "CITY"},
+    Schemes.find({"type" : cluster},
     {"_id":0,"properties.type":1,"type" : 1},function(err, result){
         if (err) throw err;
         console.log(result);
