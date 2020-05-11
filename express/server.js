@@ -155,73 +155,89 @@ get sur la BD pour récupérer coord + val_intérêt
 */
 
 app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair', function(req, res) { // création de la route sous le verbe get
-    mongoose.set('debug', true);
+    //mongoose.set('debug', true);
+    count = 0;
     type = null;
     data_set = [];
     depart_long = req.params.depart_long;
     depart_lat = req.params.depart_lat;
     arrivee_long = req.params.arrivee_long;
     arrivee_lat = req.params.arrivee_lat;
+    city = req.params.CITY;
     //console.log(mongoose.connection.readyState);
 
     //borne du rectangle de sélection des centres d'interet
-    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.003;
-    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.003;
-    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.003;;
-    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.003;
+    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.0001;
+    console.log(borne_inf_long);
+    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.0001;
+    console.log(borne_inf_lat);
+    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.0001;
+    console.log(borne_sup_long);
+    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.0001;
+    console.log(borne_sup_lat);
 
+    const object = {1:"CITY",2:"CULTURE",3:"CULTURE_SHOPS",4:"DRINK",5:"EAT",6:"HISTORICAL",7:"NATURE",8:"RELIGIOUS",9:"SHOPPING",10:"SNACKS"};
 
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    for(c in ["CITY","CULTURE","CULTURE_SHOPS","DRINK","EAT","HISTORICAL","NATURE","RELIGIOUS","SHOPPING","SNACKS"])
+    for(c=1;c<11;c++)
     {
         var clusterVal = 0;
         
-        if(c==="CITY"){
+        if(object[c]==="CITY"){
             clusterVal = req.params.CITY;
-        }else if(c==="CULTURE"){
+        }else if(object[c]==="CULTURE"){
             clusterVal = req.params.CULTURE;
-        }else if(c==="CULTURE_SHOPS"){
+        }else if(object[c]==="CULTURE_SHOPS"){
             clusterVal = req.params.CULTURE_SHOPS;
-        }else if(c==="DRINK"){
+        }else if(object[c]==="DRINK"){
             clusterVal = req.params.DRINK;
-        }else if(c==="EAT"){
+        }else if(object[c]==="EAT"){
             clusterVal = req.params.EAT;
-        }else if(c==="HISTORICAL"){
+        }else if(object[c]==="HISTORICAL"){
             clusterVal = req.params.HISTORICAL;
-        }else if(c==="NATURE"){
+        }else if(object[c]==="NATURE"){
             clusterVal = req.params.NATURE;
-        }else if(c==="RELIGIOUS"){
+        }else if(object[c]==="RELIGIOUS"){
             clusterVal = req.params.RELIGIOUS;
-        }else if(c==="SHOPPING"){
+        }else if(object[c]==="SHOPPING"){
             clusterVal = req.params.SHOPPING;
-        }else if(c==="SNACKS"){
+        }else if(object[c]==="SNACKS"){
             clusterVal = req.params.SNACKS;
         }
         
-        console.log(clusterVal);
+        console.log(object[c]+" "+" "+clusterVal);
         if(clusterVal > 0)
         {
-            console.log("Ici");
-            Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:CLUSTER}]},{"_id":0,"geometry.coordinates":1, "properties.name":1}).toArray(function(err, result){
+            //console.log("Ici");
+            Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:object[c]}]},{"_id":0,"geometry.coordinates":1, "properties.name":1},function(err, result){
                 if (err) throw err;
+
+                //console.log(result);
 
                 //Setting points for the calculation
                 result.forEach(function(doc){
+                    
                     //GET COORD
                     var long = doc.geometry.coordinates[0];
                     var lat = doc.geometry.coordinates[1];
 
                     //GET INTEREST
-                    var i = req.params.CLUSTER;
+                    var i = clusterVal;
 
                     n = new algo.Node(long, lat, i);
+                    //console.log(n);
+                    count++;
                     data_set.push(n);
-                });
-                
+
+                    next(data_set);
+                   
+                });                
             });
         }
     }
+
+    console.log("COUNT = "+count+"-----------------------");
 
     console.log(data_set); //contient tous les nodes
     console.log("*********************************************************************");
