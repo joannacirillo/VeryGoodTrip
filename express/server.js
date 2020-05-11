@@ -177,25 +177,25 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     {
         var clusterVal = 0;
         
-        if(c.equals("CITY")){
+        if(c==="CITY"){
             clusterVal = req.params.CITY;
-        }else if(c.equals("CULTURE")){
+        }else if(c==="CULTURE"){
             clusterVal = req.params.CULTURE;
-        }else if(c.equals("CULTURE_SHOPS")){
+        }else if(c==="CULTURE_SHOPS"){
             clusterVal = req.params.CULTURE_SHOPS;
-        }else if(c.equals("DRINK")){
+        }else if(c==="DRINK"){
             clusterVal = req.params.DRINK;
-        }else if(c.equals("EAT")){
+        }else if(c==="EAT"){
             clusterVal = req.params.EAT;
-        }else if(c.equals("HISTORICAL")){
+        }else if(c==="HISTORICAL"){
             clusterVal = req.params.HISTORICAL;
-        }else if(c.equals("NATURE")){
+        }else if(c==="NATURE"){
             clusterVal = req.params.NATURE;
-        }else if(c.equals("RELIGIOUS")){
+        }else if(c==="RELIGIOUS"){
             clusterVal = req.params.RELIGIOUS;
-        }else if(c.equals("SHOPPING")){
+        }else if(c==="SHOPPING"){
             clusterVal = req.params.SHOPPING;
-        }else if(c.equals("SNACKS")){
+        }else if(c==="SNACKS"){
             clusterVal = req.params.SNACKS;
         }
         
