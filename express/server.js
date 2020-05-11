@@ -273,6 +273,18 @@ var _private = {
         var dx = Math.abs(target.x - current.x), dy = Math.abs(target.y - current.y);
         return dx + dy;
     },
+    
+    //Geographical distance
+    distanceG: function (current, target){
+        var dx = target.long-current.long;
+        return Math.acos(Math.sin(this.radians(current.lat))*Math.sin(this.radians(target.lat)) + 
+            Math.cos(this.radians(current.lat))*Math.cos(this.radians(target.lat)) * Math.cos(this.radians(dx)))*6371;
+    },
+    
+    radians: function(degrees){
+        var pi = Math.PI;
+        return degrees * (pi/180);
+    },
 
     outOfBounds: function (target) { // to code real coordinates
         return target.x < 0 || target.x >= 2000 ||
@@ -306,7 +318,7 @@ algo.map = {
     },
 
     getCost: function (current_node, target_node) {
-        return _private.distanceE(current_node, target_node);
+        return _private.distanceG(current_node, target_node);
     }
 };
 
