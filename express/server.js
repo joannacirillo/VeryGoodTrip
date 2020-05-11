@@ -158,7 +158,7 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     //mongoose.set('debug', true);
     array = [];
     type = null;
-    req.data_set = [];
+    data_set = [];
     depart_long = req.params.depart_long;
     depart_lat = req.params.depart_lat;
     arrivee_long = req.params.arrivee_long;
@@ -167,13 +167,13 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     //console.log(mongoose.connection.readyState);
 
     //borne du rectangle de sélection des centres d'interet
-    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.003;
+    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.001;
     //console.log(borne_inf_long);
-    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.003;
+    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.001;
     //console.log(borne_inf_lat);
-    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.003;
+    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.001;
     //console.log(borne_sup_long);
-    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.003;
+    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.001;
     //console.log(borne_sup_lat);
 
     const object = {1:"CITY",2:"CULTURE",3:"CULTURE_SHOPS",4:"DRINK",5:"EAT",6:"HISTORICAL",7:"NATURE",8:"RELIGIOUS",9:"SHOPPING",10:"SNACKS"};
@@ -212,7 +212,14 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     }
     
     //console.log("Ici");
-    Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:{"$in":array}}]},{"_id":0,"geometry.coordinates":1, "type":1,"properties.name":1},function(err, result){
+    Schemes.find({$and:[{"geometry.coordinates": {
+        $geoWithin: {
+           $box: [
+             [ borne_inf_long, borne_inf_lat],
+             [ borne_sup_long, borne_sup_lat ]
+           ]
+        }
+     }}, {type:{"$in":array}}]},{"_id":0,"geometry.coordinates":1, "type":1,"properties.name":1},function(err, result){
         if (err) throw err;
 
         //console.log(result);
@@ -251,26 +258,24 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
 
             n = new algo.Node(long, lat, i);
             //console.log(n);
-            req.data_set.push(n);
+            data_set.push(n);
+            //console.log();
             
-        }).then(function(err){
-            if (err) throw err;
+        }); 
+        console.log(data_set); //contient tous les nodes
+        console.log("*********************************************************************");
 
-            console.log(req.data_set); //contient tous les nodes
-            console.log("*********************************************************************");
+        //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
+        depart_node = new algo.Node(depart_long,depart_lat,0);
+        arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0);
+        data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
 
-            //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
-            depart_node = new algo.Node(depart_long,depart_lat,0);
-            arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0);
-            req.data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
-
-            algo.map.setData(req.data_set);   
-            var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
-            console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
-            console.log("Done");
-            res.send(path);
-        });                
-    });
+        algo.map.setData(data_set);   
+        var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
+        console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
+        console.log("Done");
+        res.send(path);         
+    })
 });
 
 
