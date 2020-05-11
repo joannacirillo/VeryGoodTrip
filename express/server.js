@@ -173,13 +173,37 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
 
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    for(CLUSTER in ["CITY","CULTURE","CULTURE_SHOPS","DRINK","EAT","HISTORICAL","NATURE","RELIGIOUS","SHOPPING","SNACKS"])
+    for(c in ["CITY","CULTURE","CULTURE_SHOPS","DRINK","EAT","HISTORICAL","NATURE","RELIGIOUS","SHOPPING","SNACKS"])
     {
-        console.log(req.params.CLUSTER);
-        if(req.params.CLUSTER > 0)
+        var clusterVal = 0;
+        
+        if(c.equals("CITY")){
+            clusterVal = req.params.CITY;
+        }else if(c.equals("CULTURE")){
+            clusterVal = req.params.CULTURE;
+        }else if(c.equals("CULTURE_SHOPS")){
+            clusterVal = req.params.CULTURE_SHOPS;
+        }else if(c.equals("DRINK")){
+            clusterVal = req.params.DRINK;
+        }else if(c.equals("EAT")){
+            clusterVal = req.params.EAT;
+        }else if(c.equals("HISTORICAL")){
+            clusterVal = req.params.HISTORICAL;
+        }else if(c.equals("NATURE")){
+            clusterVal = req.params.NATURE;
+        }else if(c.equals("RELIGIOUS")){
+            clusterVal = req.params.RELIGIOUS;
+        }else if(c.equals("SHOPPING")){
+            clusterVal = req.params.SHOPPING;
+        }else if(c.equals("SNACKS")){
+            clusterVal = req.params.SNACKS;
+        }
+        
+        console.log(clusterVal);
+        if(clusterVal > 0)
         {
             console.log("Ici");
-            Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:CLUSTER}]},{"_id":0,"geometry.coordinates":1,"properties.name":1}).toArray(function(err, result){
+            Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:CLUSTER}]},{"_id":0,"geometry.coordinates":1, "properties.name":1}).toArray(function(err, result){
                 if (err) throw err;
 
                 //Setting points for the calculation
