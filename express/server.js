@@ -262,7 +262,7 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
             //console.log();
             
         }); 
-        console.log(data_set); //contient tous les nodes
+        //console.log(data_set); //contient tous les nodes
         console.log("*********************************************************************");
 
         //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
@@ -270,7 +270,9 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
         arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0);
         data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
 
-        algo.map.setData(data_set);   
+        //console.log(req.params.duree);
+        algo.map.setData(data_set);  
+        console.log(algo.map); 
         var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
         console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
         console.log("Done");
@@ -440,7 +442,7 @@ algo.pathFinder = {
 
         while(this.open.length !== 0 || this.time < maxT) {
             best = this.getBestOpen();
-            console.log("best node is : " + best.x + " " + best.y);
+            //console.log("best node is : " + best.x + " " + best.y);
             best.parent = current;
 
             if(best.x === target_node.x && best.y === target_node.y)
