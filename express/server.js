@@ -18,24 +18,20 @@ app.listen(port, () => {
 });
 
 /*
-
 //SNACKS SHOPPING CULTURE_SHOPS CULTURE HISTORICAL RELIGIOUS
 app.get('/:cluster/:wheelchair', function(req, res) { // création de la route sous le verbe get
     mongoose.set('debug', true);
     wheelchair=null;
     //console.log(mongoose.connection.readyState);
-
     if(req.params.cluster!="null"){
         cluster = [req.params.cluster];
     } else {
         cluster = ["SNACKS","CULTURE_SHOPS","SHOPPING","RELIGIOUS"];
     }
-
     
     if(req.params.cluster==null){
         res.send("Spécifier le genre ou le type de lieu");
     }
-
     //Setting wether a wheelchair access is required in the request
     if(req.params.wheelchair!="null"){
         wheelchair = req.params.wheelchair;
@@ -46,7 +42,6 @@ app.get('/:cluster/:wheelchair', function(req, res) { // création de la route s
     } else if(wheelchair=="limited"){
         array = ["limited","yes"];
     }
-
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
     Schemes.find({"type" : cluster, "properties.wheelchair" : {"$in" : array},},
@@ -55,7 +50,6 @@ app.get('/:cluster/:wheelchair', function(req, res) { // création de la route s
         // //Setting points for the calculation
         // result.forEach(function(doc){
         //     if(document.type){
-
         //     }
         // });
         //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
@@ -63,7 +57,6 @@ app.get('/:cluster/:wheelchair', function(req, res) { // création de la route s
         res.send(result);
     });
 });
-
 //EAT DRINK
 app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) {
     mongoose.set('debug', true);
@@ -71,13 +64,11 @@ app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) 
     type = null;
     wheelchair=null;
     //console.log(mongoose.connection.readyState);
-
     if(req.params.cluster!="null"){
         cluster = [req.params.cluster];
     } else {
         cluster = ["DRINK","EAT"];
     }
-
     //Setting wether a wheelchair access is required in the request
     if(req.params.wheelchair!="null"){
         wheelchair = req.params.wheelchair;
@@ -88,26 +79,21 @@ app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) 
     } else if(wheelchair=="limited"){
         array = ["limited","yes"];
     }
-
     //Setting the type of cuisine required
     cuisine = null
     if(req.params.cuisine!="null"){
         cuisine=req.params.cuisine;
     }
-
     //Settting wether delivery is required
     delivery=["yes","no",null];
     if(req.params.delivery=="yes"){
         delivery=[req.params.delivery];
     }
-
     //Setting wether takeaway is required
     takeaway=["yes","no",null];
     if(req.params.takeaway=="yes"){
         takeaway=[req.params.takeaway];
     }
-
-
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
     Schemes.find({"type" : {"$in" : cluster} , "properties.wheelchair" : {"$in" : array},
@@ -117,7 +103,6 @@ app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) 
         // //Setting points for the calculation
         // result.forEach(function(doc){
         //     if(document.type){
-
         //     }
         // });
         //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
@@ -125,14 +110,11 @@ app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) 
         res.send(result);
     });
 });
-
 //CITY
 app.get('/CITY', function(req, res) { // création de la route sous le verbe get
     mongoose.set('debug', true);
     type = null;
     //console.log(mongoose.connection.readyState);
-
-
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
     Schemes.find({"type" : "CITY"},
@@ -141,7 +123,6 @@ app.get('/CITY', function(req, res) { // création de la route sous le verbe get
         // //Setting points for the calculation
         // result.forEach(function(doc){
         //     if(document.type){
-
         //     }
         // });
         //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
@@ -149,16 +130,10 @@ app.get('/CITY', function(req, res) { // création de la route sous le verbe get
         res.send(result);
     });
 });
-
-
-
-
-
 app.post('/', async (req, res) => {
     type = req.body.type;
     properties = req.body.properties;
     coordinates = req.body.geometry.coordinates;
-
     const new_place = new Schemes({
         type : type,
         properties : properties,
@@ -167,26 +142,26 @@ app.post('/', async (req, res) => {
             coordinates : coordinates
         }
     })
-
     await new_place.save() // sauvegarde asynchrone du nouveau livre
     res.json(new_place);
     return
-
 })
 */
 
 /*
 ----------------------------------------------------
-
 get sur la BD pour récupérer coord + val_intérêt
-
 ----------------------------------------------------
 */
 
 app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair', function(req, res) { // création de la route sous le verbe get
     mongoose.set('debug', true);
     type = null;
-    data_set = {};
+    data_set = [];
+    depart_long = req.params.depart_long;
+    depart_lat = req.params.depart_lat;
+    arrivee_long = req.params.arrivee_long;
+    arrivee_lat = req.params.arrivee_lat;
     //console.log(mongoose.connection.readyState);
 
     //borne du rectangle de sélection des centres d'interet
@@ -198,11 +173,13 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
 
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    for(CLUSTER in [CITY,CULTURE,CULTURE_SHOPS,DRINK,EAT,HISTORICAL,NATURE,RELIGIOUS,SHOPPING,SNACKS])
+    for(CLUSTER in ["CITY","CULTURE","CULTURE_SHOPS","DRINK","EAT","HISTORICAL","NATURE","RELIGIOUS","SHOPPING","SNACKS"])
     {
+        console.log(req.params.CLUSTER);
         if(req.params.CLUSTER > 0)
         {
-            Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:CLUSTER}]},{"_id":0,"geometry.coordinates":1}).toArray(function(err, result){
+            console.log("Ici");
+            Schemes.find({$and:[{"geometry.coordinates.0": {$gte : borne_inf_long, $lte : borne_sup_long}},{"geometry.coordinates.1": {$gte : borne_inf_lat, $lte : borne_sup_lat}}, {type:CLUSTER}]},{"_id":0,"geometry.coordinates":1,"properties.name":1}).toArray(function(err, result){
                 if (err) throw err;
 
                 //Setting points for the calculation
@@ -214,7 +191,7 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
                     //GET INTEREST
                     var i = req.params.CLUSTER;
 
-                    n = new algo.node(long, lat, i);
+                    n = new algo.Node(long, lat, i);
                     data_set.push(n);
                 });
                 
@@ -223,16 +200,18 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     }
 
     console.log(data_set); //contient tous les nodes
+    console.log("*********************************************************************");
 
     //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
-    depart_node = new algo.Node(depart_X,depart_Y,0);
-    arrivee_node = new algo.Node(arrivee_X,arrivee_Y,0);
+    depart_node = new algo.Node(depart_long,depart_lat,0);
+    arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0);
     data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
 
     algo.map.setData(data_set);   
-    var path = algo.pathFinder.findpath(depart_node, arrivee_node, req.params.duree);
-    console.log("Done");
+    var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
     console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
+    console.log("Done");
+    res.send(path);
 
 
 });
@@ -241,9 +220,7 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
 
 /*
 ----------------------------------------------------
-
 ALGO.js -> test d'implémentation
-
 ----------------------------------------------------
 */
 
