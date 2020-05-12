@@ -5,7 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const Schemes = require('./places'); // on importe le modele
 
-mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser:true});
+mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true});
 
 
 let app = express();
@@ -18,162 +18,32 @@ app.listen(port, () => {
 });
 
 /*
-//SNACKS SHOPPING CULTURE_SHOPS CULTURE HISTORICAL RELIGIOUS
-app.get('/:cluster/:wheelchair', function(req, res) { // création de la route sous le verbe get
-    mongoose.set('debug', true);
-    wheelchair=null;
-    //console.log(mongoose.connection.readyState);
-    if(req.params.cluster!="null"){
-        cluster = [req.params.cluster];
-    } else {
-        cluster = ["SNACKS","CULTURE_SHOPS","SHOPPING","RELIGIOUS"];
-    }
-    
-    if(req.params.cluster==null){
-        res.send("Spécifier le genre ou le type de lieu");
-    }
-    //Setting wether a wheelchair access is required in the request
-    if(req.params.wheelchair!="null"){
-        wheelchair = req.params.wheelchair;
-    }
-    array = ["yes"];
-    if(wheelchair == null || wheelchair=="no"){
-        array=array.concat([null,"no","limited"]);
-    } else if(wheelchair=="limited"){
-        array = ["limited","yes"];
-    }
-    //REQUEST
-    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    Schemes.find({"type" : cluster, "properties.wheelchair" : {"$in" : array},},
-    {"_id":0,"properties.type":1,"type" : 1},function(err, result){
-        if (err) throw err;
-        // //Setting points for the calculation
-        // result.forEach(function(doc){
-        //     if(document.type){
-        //     }
-        // });
-        //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
-        console.log(result);
-        res.send(result);
-    });
-});
-//EAT DRINK
-app.get('/:cluster/:wheelchair/:cuisine/:delivery/:takeway', function(req, res) {
-    mongoose.set('debug', true);
-    cluster = null;
-    type = null;
-    wheelchair=null;
-    //console.log(mongoose.connection.readyState);
-    if(req.params.cluster!="null"){
-        cluster = [req.params.cluster];
-    } else {
-        cluster = ["DRINK","EAT"];
-    }
-    //Setting wether a wheelchair access is required in the request
-    if(req.params.wheelchair!="null"){
-        wheelchair = req.params.wheelchair;
-    }
-    array = ["yes"];
-    if(wheelchair == null || wheelchair=="no"){
-        array=array.concat([null,"no","limited"]);
-    } else if(wheelchair=="limited"){
-        array = ["limited","yes"];
-    }
-    //Setting the type of cuisine required
-    cuisine = null
-    if(req.params.cuisine!="null"){
-        cuisine=req.params.cuisine;
-    }
-    //Settting wether delivery is required
-    delivery=["yes","no",null];
-    if(req.params.delivery=="yes"){
-        delivery=[req.params.delivery];
-    }
-    //Setting wether takeaway is required
-    takeaway=["yes","no",null];
-    if(req.params.takeaway=="yes"){
-        takeaway=[req.params.takeaway];
-    }
-    //REQUEST
-    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    Schemes.find({"type" : {"$in" : cluster} , "properties.wheelchair" : {"$in" : array},
-    "properties.cuisine" : cuisine, "properties.delivery" : {"$in" : delivery},"properties.takeaway" : {"$in" : takeaway}},
-    {"_id":0,"properties.type":1,"type":1},function(err, result){
-        if (err) throw err;
-        // //Setting points for the calculation
-        // result.forEach(function(doc){
-        //     if(document.type){
-        //     }
-        // });
-        //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
-        console.log(result);
-        res.send(result);
-    });
-});
-//CITY
-app.get('/CITY', function(req, res) { // création de la route sous le verbe get
-    mongoose.set('debug', true);
-    type = null;
-    //console.log(mongoose.connection.readyState);
-    //REQUEST
-    //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    Schemes.find({"type" : "CITY"},
-    {"_id":0,"properties.type":1,"type" : 1},function(err, result){
-        if (err) throw err;
-        // //Setting points for the calculation
-        // result.forEach(function(doc){
-        //     if(document.type){
-        //     }
-        // });
-        //CALCUL du plus cours chemin de departure à destination, passant pas les points contenus dans result
-        console.log(result);
-        res.send(result);
-    });
-});
-app.post('/', async (req, res) => {
-    type = req.body.type;
-    properties = req.body.properties;
-    coordinates = req.body.geometry.coordinates;
-    const new_place = new Schemes({
-        type : type,
-        properties : properties,
-        geometry : {
-            type : "Point",
-            coordinates : coordinates
-        }
-    })
-    await new_place.save() // sauvegarde asynchrone du nouveau livre
-    res.json(new_place);
-    return
-})
-*/
-
-/*
 ----------------------------------------------------
 get sur la BD pour récupérer coord + val_intérêt
 ----------------------------------------------------
 */
 
 app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair', function(req, res) { // création de la route sous le verbe get
-    //mongoose.set('debug', true);
+    mongoose.set('debug', true);
     array = [];
     type = null;
     data_set = [];
+
     depart_long = req.params.depart_long;
     depart_lat = req.params.depart_lat;
     arrivee_long = req.params.arrivee_long;
     arrivee_lat = req.params.arrivee_lat;
-    city = req.params.CITY;
+
     //console.log(mongoose.connection.readyState);
 
     //borne du rectangle de sélection des centres d'interet
-    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.001;
+    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.003;
     //console.log(borne_inf_long);
-    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.001;
+    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.003;
     //console.log(borne_inf_lat);
-    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.001;
+    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.003;
     //console.log(borne_sup_long);
-    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.001;
+    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.003;
     //console.log(borne_sup_lat);
 
     const object = {1:"CITY",2:"CULTURE",3:"CULTURE_SHOPS",4:"DRINK",5:"EAT",6:"HISTORICAL",7:"NATURE",8:"RELIGIOUS",9:"SHOPPING",10:"SNACKS"};
@@ -210,8 +80,13 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
             array.push(object[c]);
         }
     }
-    
-    //console.log("Ici");
+
+    // console.log(">>array");
+    // console.log(array);
+    // console.log(">>end of array");
+
+    //console.log(mongoose.connection.readyState);
+
     Schemes.find({$and:[{"geometry.coordinates": {
         $geoWithin: {
            $box: [
@@ -222,8 +97,12 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
      }}, {type:{"$in":array}}]},{"_id":0,"geometry.coordinates":1, "type":1,"properties.name":1},function(err, result){
         if (err) throw err;
 
-        //console.log(result);
-
+        /*
+        console.log(">>result");
+        console.log(result);
+        console.log(">>end of result");
+        */
+        
         //Setting points for the calculation
         result.forEach(function(doc){
 
@@ -298,8 +177,8 @@ var algo = algo || {};
 //--------------------------------------
 
 algo.Node = function (x, y, i=0) {
-    this.x = x;
-    this.y = y;
+    this.long = x;
+    this.lat = y;
 
     this.interest = i;
     this.parent =null;
@@ -310,13 +189,13 @@ algo.Node = function (x, y, i=0) {
 var _private = {
     // Euclidean distance
     distanceE: function (current, target) {
-        var dx = target.x - current.x, dy = target.y - current.y;
+        var dx = target.long - current.long, dy = target.lat - current.lat;
         return Math.sqrt((dx * dx) + (dy * dy));
     },
 
     // Manhattan distance
     distanceM: function (current, target) {
-        var dx = Math.abs(target.x - current.x), dy = Math.abs(target.y - current.y);
+        var dx = Math.abs(target.long - current.long), dy = Math.abs(target.lat - current.lat);
         return dx + dy;
     },
     
@@ -333,8 +212,8 @@ var _private = {
     },
 
     outOfBounds: function (target) { // to code real coordinates
-        return target.x < 0 || target.x >= 2000 ||
-            target.y < 0 || target.y >= 2000;
+        return target.long < 0 || target.long >= 2000 ||
+            target.lat < 0 || target.lat >= 2000;
     }
 };
 
@@ -402,7 +281,7 @@ algo.pathFinder = {
     // Check if the node is already in the open set
     inOpen: function (node) {
         for (var i = 0; i < this.open.length; i++) {
-            if (this.open[i].x === node.x && this.open[i].y === node.y)
+            if (this.open[i].long === node.long && this.open[i].lat === node.lat)
                 return this.open[i];
         }
 
@@ -427,7 +306,7 @@ algo.pathFinder = {
     // Check if the node is already in the closed set
     inClosed: function (node) {
         for (var i = 0; i < this.closed.length; i++) {
-            if (this.closed[i].x === node.x && this.closed[i].y === node.y)
+            if (this.closed[i].long === node.long && this.closed[i].lat === node.lat)
                 return this.closed[i];
         }
 
@@ -446,10 +325,10 @@ algo.pathFinder = {
 
         while(this.open.length !== 0 || this.time < maxT) {
             best = this.getBestOpen();
-            //console.log("best node is : " + best.x + " " + best.y);
+            console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
 
-            if(best.x === target_node.x && best.y === target_node.y)
+            if(best.long === target_node.long && best.lat === target_node.lat)
                 return [this.buildPath(best, []), this.time + algo.map.getCost(current,best)];
 
             if(this.time + algo.map.getCost(current, best) + algo.map.getCost(best,target_node) <= maxT){
