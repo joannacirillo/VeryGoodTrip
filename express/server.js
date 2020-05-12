@@ -1,12 +1,31 @@
 const express = require('express');
 const body = require('body-parser');
 
+var passport = require('passport')
+  , LocalStrategy = require('passport-local').Strategy;
+
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+    User.findOne({ username : username }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      if (!user.validPassword(password)) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+      return done(null, user);
+    });
+  }
+));
+
 
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Schemes = require('./places'); // on importe le modele
+const Users = require('./users');
 
-mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
+mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser:true}); //ici changer le nom de la DB
 
 
 let app = express();
@@ -20,11 +39,23 @@ app.listen(port, () => {
 
 /*
 ----------------------------------------------------
+Gestion Utilisateurs
+----------------------------------------------------
+*/
+
+app.get('/login',passport.authenticate('local'),function(req,res){
+    res.redirect('/users/' + req.user.username);
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+----------------------------------------------------
 get sur la BD pour récupérer coord + val_intérêt
 ----------------------------------------------------
 */
 
-app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair/:transport', function(req, res) { // création de la route sous le verbe get
+app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair/:takeaway/:cuisine', function(req, res) { // création de la route sous le verbe get
     //mongoose.set('debug', true);
     array = [];
     type = null;
@@ -46,15 +77,6 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     //console.log(borne_sup_long);
     borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.003;
     //console.log(borne_sup_lat);
-
-
-    if(req.params.transport == "VELO"){
-        var distance_parcours = req.params.duree * 0.25;
-    }else if(req.params.transport == "PIED"){
-        var distance_parcours = req.params.duree * 0.083;
-    }else if(req.params.transport == "VOITURE"){
-        var distance_parcours = req.params.duree * 0.417;
-    }
 
     const object = {1:"CITY",2:"CULTURE",3:"CULTURE_SHOPS",4:"DRINK",5:"EAT",6:"HISTORICAL",7:"NATURE",8:"RELIGIOUS",9:"SHOPPING",10:"SNACKS"};
 
@@ -126,6 +148,12 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
                 clusterVal = req.params.DRINK;
             }else if(doc.type=="EAT"){
                 clusterVal = req.params.EAT;
+                if(req.params.cuisine!=null && doc.properties.cuisine == req.params.cuisine){
+                    clusterVal+=2;
+                }
+                if(req.params.takeaway!=null && doc.properties.takeaway == req.params.takeaway){
+                    clusterVal+=2;
+                }
             }else if(doc.type=="HISTORICAL"){
                 clusterVal = req.params.HISTORICAL;
             }else if(doc.type=="NATURE"){
@@ -163,7 +191,7 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
         //console.log(req.params.duree);
         algo.map.setData(data_set);  
         //console.log(algo.map); 
-        var path = algo.pathFinder.findPath(depart_node, arrivee_node, distance_parcours);
+        var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
         //console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
         
         console.log("Done");
