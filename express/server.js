@@ -6,7 +6,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const Schemes = require('./places'); // on importe le modele
 
-mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
+mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser:true}); //ici changer le nom de la DB
 
 
 let app = express();
@@ -25,7 +25,7 @@ get sur la BD pour récupérer coord + val_intérêt
 */
 
 app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair', function(req, res) { // création de la route sous le verbe get
-    mongoose.set('debug', true);
+    //mongoose.set('debug', true);
     array = [];
     type = null;
     data_set = [];
@@ -132,11 +132,12 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
             //GET COORD
             var long = doc.geometry.coordinates[0];
             var lat = doc.geometry.coordinates[1];
+            var name = doc.properties.name;
 
             //GET INTEREST
             var i = clusterVal;
 
-            n = new algo.Node(long, lat, i);
+            n = new algo.Node(long, lat, i, name);
             //console.log(n);
             data_set.push(n);
             //console.log();
@@ -146,23 +147,21 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
         console.log("*********************************************************************");
 
         //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
-        depart_node = new algo.Node(depart_long,depart_lat,0);
-        arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0);
+        depart_node = new algo.Node(depart_long,depart_lat,0,"Depart");
+        arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0,"Arrivee");
         data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
 
         //console.log(req.params.duree);
         algo.map.setData(data_set);  
-        console.log(algo.map); 
+        //console.log(algo.map); 
         var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
-        console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
-        // const promeses = [];
-        // for(point in path){
-        //     promeses.push(Schemes.find({"geometry.coordonnee.0" : point["x"]},{"properties.name" : 1,"geometry":1}))
-        // }
+        //console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
+        
         console.log("Done");
-        res.send(path);         
-    })
-});
+        res.send(path);
+        });
+    });
+
 
 
 
@@ -177,12 +176,14 @@ var algo = algo || {};
 
 //--------------------------------------
 
-algo.Node = function (x, y, i=0) {
+algo.Node = function (x, y, i=0,name) {
     this.long = x;
     this.lat = y;
 
     this.interest = i;
+    this.name = name;
     this.parent =null;
+  
 };
 
 //--------------------------------------
@@ -326,7 +327,7 @@ algo.pathFinder = {
 
         while(this.open.length !== 0 || this.time < maxT) {
             best = this.getBestOpen();
-            console.log("best node is : " + best.long + " " + best.lat);
+            //console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
 
             if(best.long === target_node.long && best.lat === target_node.lat)
@@ -334,7 +335,7 @@ algo.pathFinder = {
 
             if(this.time + algo.map.getCost(current, best) + algo.map.getCost(best,target_node) <= maxT){
                 this.time += algo.map.getCost(current,best);
-                console.log("new time is : " + this.time);
+                //console.log("new time is : " + this.time);
                 current = best;
             }
             this.removeOpen(best);
