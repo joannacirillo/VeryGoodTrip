@@ -275,6 +275,10 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
         console.log(algo.map); 
         var path = algo.pathFinder.findPath(depart_node, arrivee_node, req.params.duree);
         console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
+        // const promeses = [];
+        // for(point in path){
+        //     promeses.push(Schemes.find({"geometry.coordonnee.0" : point["x"]},{"properties.name" : 1,"geometry":1}))
+        // }
         console.log("Done");
         res.send(path);         
     })
