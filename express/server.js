@@ -1,12 +1,13 @@
 const express = require('express');
 const body = require('body-parser');
+const cors = require('cors');
 
 var passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy;
 
 passport.use(new LocalStrategy(
   function(username, password, done) {
-    User.findOne({ username : username }, function (err, user) {
+    Users.findOne({ "username" : username }, function (err, user) {
       if (err) { return done(err); }
       if (!user) {
         return done(null, false, { message: 'Incorrect username.' });
@@ -14,13 +15,12 @@ passport.use(new LocalStrategy(
       if (!user.validPassword(password)) {
         return done(null, false, { message: 'Incorrect password.' });
       }
-      return done(null, user);
+      return done(null, user._id);
     });
   }
 ));
 
 
-const cors = require('cors');
 const mongoose = require('mongoose');
 const Schemes = require('./places'); // on importe le modele
 const Users = require('./users');
@@ -43,8 +43,32 @@ Gestion Utilisateurs
 ----------------------------------------------------
 */
 
-app.get('/login',passport.authenticate('local'),function(req,res){
-    res.redirect('/users/' + req.user.username);
+app.post('/login',function(req, res){
+        
+    console.log("Post ok !");
+    passport.authenticate("local"),function(err,user,info){
+        console.log("Ici 0 !")
+        if(err) {
+            console.log("Ici 1 !");
+            return res.status(400).json({errors :err});
+        }
+
+        if(!user){
+            console.log("Ici 2 !");
+            return res.status(400).json({errors : "No user found"});
+        }
+        req.logIn(user,function(err){
+            if(err) {
+                console.log("Ici 3 !");
+                return res.status(400).json({errors : err});
+            }
+
+            console.log("Ici 4 !");
+
+            return res.status(200).json({success : 'logged in ${user.id}'});
+        })
+        res.redirect('/users/' + req.user.userid);
+    }
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
