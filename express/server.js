@@ -340,7 +340,10 @@ algo.pathFinder = {
             best.parent = current;
 
             if(best.long === target_node.long && best.lat === target_node.lat)
-                return [this.buildPath(best, []), this.time + algo.map.getCost(current,best)];
+            {
+                //return [this.buildPath(best, []), this.time + algo.map.getCost(current,best)];
+            	return [best, this.time + algo.map.getCost(current,best)];
+            }
 
             if(this.time + algo.map.getCost(current, best) + algo.map.getCost(best,target_node) <= maxT){
                 this.time += algo.map.getCost(current,best);
