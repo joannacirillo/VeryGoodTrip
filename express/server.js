@@ -253,8 +253,8 @@ algo.map = {
         return this.data;
     },
 
-    getCost: function (current_node, target_node) {
-        return _private.distanceG(current_node, target_node);
+    getHerustic: function (current_node, target_node, d_max) {
+        return target_node.interest*(1-(_private.distanceG(current_node, target_node)/d_max)*(_private.distanceG(current_node, target_node)/d_max));
     }
 };
 
@@ -273,7 +273,7 @@ algo.pathFinder = {
     open: [],
 
     // Maximum time before shutting down a closed path
-    time: 0,
+    dist: 0,
 
     addOpen: function (node, parent=null) {
         node.parent = parent;
@@ -299,11 +299,11 @@ algo.pathFinder = {
         return false;
     },
 
-    // Get the highest interest node in the open set
-    getBestOpen: function () {
+    // Get the highest herustic node in the open set
+    getBestOpen: function (current_node, d_max) {
         var bestNode = 0;
         for (var i = 0; i < this.open.length; i++) {
-            if (this.open[i].interest > this.open[bestNode].interest) bestNode = i;
+            if (algo.map.getHerustic(current_node, this.open[i], d_max) > algo.map.getHerustic(current_node, this.open[bestNode], d_max)) bestNode = i;
         }
 
         return this.open[bestNode];
@@ -324,7 +324,7 @@ algo.pathFinder = {
         return false;
     }, 
 
-    findPath: function (current_node, target_node, maxT) {     
+    findPath: function (current_node, target_node, d_max) {     
         var current,
             best;
 
@@ -334,17 +334,17 @@ algo.pathFinder = {
         //Initiate the first node
         current = current_node;
 
-        while(this.open.length !== 0 || this.time < maxT) {
-            best = this.getBestOpen();
+        while(this.open.length !== 0 || this.dist < d_max) {
+            best = this.getBestOpen(current,d_max);
             //console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
 
             if(best.long === target_node.long && best.lat === target_node.lat)
-                return [this.buildPath(best, []), this.time + algo.map.getCost(current,best)];
+                return [this.buildPath(best, []), this.time + _private.distanceG(current,best)];
 
-            if(this.time + algo.map.getCost(current, best) + algo.map.getCost(best,target_node) <= maxT){
-                this.time += algo.map.getCost(current,best);
-                //console.log("new time is : " + this.time);
+            if(this.dist + _private.distanceG(current, best) + _private.distanceG(best,target_node) <= d_max){
+                this.dist += _private.distanceG(current,best);
+                //console.log("new dist is : " + this.dist);
                 current = best;
             }
             this.removeOpen(best);
@@ -367,8 +367,7 @@ algo.pathFinder = {
     reset: function () {
         this.closed = [];
         this.open = algo.map.data;
-        this.time = 0;
-        this.maxTime = 0;
+        this.dist = 0;
         return this;
     }
 };
