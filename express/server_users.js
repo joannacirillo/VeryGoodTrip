@@ -2,7 +2,6 @@ const express = require('express');
 let app = express();
 const body = require('body-parser');
 app.use(body());
-app.use(body.urlencoded({ extended: true }));
 
 var crypto = require('crypto');
 
@@ -36,7 +35,7 @@ passport.serializeUser(function(user, cb) {
   });
   
 passport.deserializeUser(function(id, cb) {
-    Users.findById(id, function(err, user) {
+    User.findById(id, function(err, user) {
         cb(err, user);
     });
 });
@@ -46,7 +45,7 @@ const Users = require('./users'); //import model for user authentification
 const Userpreferences = require('./user_preferences'); //model for user preferences
 mongoose.set('debug', true);
 
-mongoose.connect('mongodb://localhost/DatabaseTMP',{useNewUrlParser:true});
+mongoose.connect('mongodb://localhost/pweb',{useNewUrlParser:true});
 
 
 let port = 8080;
