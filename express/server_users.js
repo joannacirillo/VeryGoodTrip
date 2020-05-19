@@ -36,13 +36,14 @@ passport.serializeUser(function(user, cb) {
   });
   
 passport.deserializeUser(function(id, cb) {
-    User.findById(id, function(err, user) {
+    Users.findById(id, function(err, user) {
         cb(err, user);
     });
 });
 
 const mongoose = require('mongoose');
 const Users = require('./users'); //import model for user authentification
+const Userpreferences = require('./user_preferences'); //model for user preferences
 mongoose.set('debug', true);
 
 mongoose.connect('mongodb://localhost/DatabaseTMP',{useNewUrlParser:true});
@@ -56,14 +57,9 @@ app.listen(port, () => {
 
 /*
 ----------------------------------------------------
-Users
+Users : login and sign up
 ----------------------------------------------------
 */
-app.get('/',function(req,res){
-    res.send("Bienvenue sur VeryGoodTrip !");
-});
-
-
 app.post('/signup',function(req,res){
 
     username = req.body.username;
@@ -73,19 +69,25 @@ app.post('/signup',function(req,res){
         if(user==null){
             var user_id = crypto.createHash('md5').update(req.body.username).digest('hex');
             var password = crypto.createHash('md5').update(req.body.password).digest('hex');
-            Users.insertMany({username : req.body.username, user_id : user_id ,password : password})
+            Users.insertMany({username : req.body.username, user_id : user_id ,password : password});
+            Userpreferences.insertMany({user_id : user_id});
             res.redirect('/success?username='+username);
         } else {
             res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
         }
     })
-})
+});
 
-app.post('/login', passport.authenticate('local', { successRedirect: '/',failureRedirect: '/error' }),function(req, res) {
+app.post('/login', passport.authenticate('local', { failureRedirect: '/error' }),function(req, res) {
     res.redirect('/success?username='+req.user.username);
 });
 
-app.get('/success', (req, res) => res.send("Welcome "+req.query.username+"!!"));
+app.get('/success', function(req, res) {
+    Users.findOne({username : req.query.username}, function(err,user){
+        if(err) throw err;
+        res.send(user.user_id);
+    });
+});
 
 app.get('/logout', function(req, res){
     req.logout();
@@ -95,4 +97,38 @@ app.get('/logout', function(req, res){
 
 app.get('/error',function(req,res){
     res.status(401).send("Nom d'utilisateur ou mot de passe erroné");
+});
+
+/*
+----------------------------------------------------
+Users : preferences
+----------------------------------------------------
+*/
+
+app.post('/preferences/get',function(req,res){
+    Userpreferences.find({user_id : req.body.user_id},function(err,result){
+        if(err) throw err;
+        res.send(result);
+    })
+});
+
+//Input from client : JSON containing all the preferences
+app.put('/preferences/set',function(req,res){
+    
+    cluster = req.body.cluster;
+    interests = req.body.interests;
+    cuisine = req.body.cuisine;
+    historical = req.body.historical;
+    disability = req.body.disability;
+
+    Userpreferences.updateOne(
+        {user_id : req.body.user_id,},
+        {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
+        $set : {disability : disability}}
+        ,function(err){
+            if(err) throw err;
+            res.send("Préférences mises à jour !");
+        }
+    );
+    
 });
