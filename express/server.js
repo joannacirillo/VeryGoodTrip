@@ -4,7 +4,9 @@ const body = require('body-parser');
 
 const cors = require('cors');
 const mongoose = require('mongoose');
-const Schemes = require('./places'); // on importe le modele
+const Places_Schemes = require('./places'); // on importe le modele places
+const Profiles_Schemes = require('./profiles'); // on importe le modele profiles
+
 
 mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
 
@@ -24,7 +26,7 @@ get sur la BD pour récupérer coord + val_intérêt
 ----------------------------------------------------
 */
 
-app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:CULTURE_SHOPS/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair/:transport', function(req, res) { // création de la route sous le verbe get
+app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair/:transport', function(req, res) { // création de la route sous le verbe get
     //mongoose.set('debug', true);
     array = [];
     type = null;
@@ -47,20 +49,25 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.003;
     //console.log(borne_sup_lat);
 
-
+    //GET VITESSE
+    var vitesse = 0;
     if(req.params.transport == "VELO"){
-        var distance_parcours = req.params.duree * 0.25;
+        vitesse = 0.25;
     }else if(req.params.transport == "PIED"){
-        var distance_parcours = req.params.duree * 0.083;
+        vitesse = 0.083;
     }else if(req.params.transport == "VOITURE"){
-        var distance_parcours = req.params.duree * 0.417;
+        vitesse = 0.417;
     }
 
-    const object = {1:"CITY",2:"CULTURE",3:"CULTURE_SHOPS",4:"DRINK",5:"EAT",6:"HISTORICAL",7:"NATURE",8:"RELIGIOUS",9:"SHOPPING",10:"SNACKS"};
+    //GET TEMPS
+    var temps_parcours = req.params.duree;
+
+
+    const object = {1:"CITY",2:"CULTURE",3:"DRINK",4:"EAT",5:"HISTORICAL",6:"NATURE",7:"RELIGIOUS",8:"SHOPPING",9:"SNACKS"};
 
     //REQUEST
     //On ne peut pas faire de requête avec null, sinon ne renvoie rien
-    for(c=1;c<11;c++)
+    for(c=1;c<10;c++)
     {
         var clusterVal = 0;
         
@@ -68,8 +75,6 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
             clusterVal = req.params.CITY;
         }else if(object[c]==="CULTURE"){
             clusterVal = req.params.CULTURE;
-        }else if(object[c]==="CULTURE_SHOPS"){
-            clusterVal = req.params.CULTURE_SHOPS;
         }else if(object[c]==="DRINK"){
             clusterVal = req.params.DRINK;
         }else if(object[c]==="EAT"){
@@ -94,17 +99,65 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
     // console.log(">>array");
     // console.log(array);
     // console.log(">>end of array");
+    var interests = [];
+    var culinary_pref_bd = []; //liste des mangers
+    //Ici on affine les données en fonction des pref utilisateurs
+    var id = req.params.id;
+    if(id !== 0)
+    {
+    	Profiles_Schemes.find({"user_id":id},{"_id":0,"interests":1, "culinary_pref":1, "disability":1}, function(err, res){
+    		if (err) throw err;
 
+    		/*
+    		console.log(">>res");
+	        console.log(res);
+	        console.log(">>end of res");
+			*/
+			interests = res[0].interests; //liste des interets
+
+			var culinary_pref_user = res[0].culinary_pref;
+
+			culinary_pref_user.forEach(function(c){
+				if(c === "Americain"){
+					//console.log("America fuck yeah!");
+					culinary_pref_bd.push("american","bagel","burger","steak_house");
+				}else if(c === "Asiatique"){
+					culinary_pref_bd.push("asian","korean","thai","vietnamese");
+				}else if(c === "Chinois"){
+					culinary_pref_bd.push("chinese");
+				}else if(c === "Friterie"){
+					culinary_pref_bd.push("belgian");
+				}else if(c === "Italien"){
+					culinary_pref_bd.push("italian","pizza");
+				}else if(c === "Japonais"){
+					culinary_pref_bd.push("japanese","sushi");
+				}else if(c === "Mexicain"){
+					culinary_pref_bd.push("mexican");
+				}else if(c === "Oriental"){
+					culinary_pref_bd.push("african","indian","lebanese","maghreb","tunisian","turkish");
+				}else if(c === "Poissons"){
+					culinary_pref_bd.push("mediterranean","sea_food");
+				}else if(c === "Regional"){
+					culinary_pref_bd.push("bistro","brasserie","french","regional");
+				}else if(c === "Sandwich"){
+					culinary_pref_bd.push("greek","kebab","sandwich","spanish","tacos","tapas");
+				}else if(c === "Vegetarien"){
+					culinary_pref_bd.push("salad","vegetarian;vegan");
+				}
+			});
+    	});
+    }
+    
     //console.log(mongoose.connection.readyState);
 
-    Schemes.find({$and:[{"geometry.coordinates": {
+    Places_Schemes.find({$and:[{"geometry.coordinates": {
         $geoWithin: {
            $box: [
              [ borne_inf_long, borne_inf_lat],
              [ borne_sup_long, borne_sup_lat ]
            ]
         }
-     }}, {type:{"$in":array}}]},{"_id":0,"geometry.coordinates":1, "type":1,"properties.name":1},function(err, result){
+     }}, {type:{"$in":array}}]},{"_id":0,"geometry.coordinates":1, "type":1,"properties.name":1, "properties.type":1, "properties.cuisine":1},function(err, result){
         if (err) throw err;
 
         /*
@@ -120,8 +173,6 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
                 clusterVal = req.params.CITY;
             }else if(doc.type=="CULTURE"){
                 clusterVal = req.params.CULTURE;
-            }else if(doc.type=="CULTURE_SHOPS"){
-                clusterVal = req.params.CULTURE_SHOPS;
             }else if(doc.type=="DRINK"){
                 clusterVal = req.params.DRINK;
             }else if(doc.type=="EAT"){
@@ -144,9 +195,34 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
             var name = doc.properties.name;
 
             //GET INTEREST
-            var i = clusterVal;
+            var i = parseInt(clusterVal);
+            var cuisine = doc.properties.cuisine;
+            var type = doc.properties.type;
+            if(culinary_pref_bd.find(element => element === cuisine) !== undefined)
+            	i += 3;
+            if(interests.find(element => element === type) !== undefined)
+            	i += 3;
 
-            n = new algo.Node(long, lat, i, name);
+            //GET TRAVEL TIME
+            var time = 0;
+            
+            if(type === "memorial" || type === "monument" || type === "fountain" || type === "gate" || type === "bridge" || type === "building" || type === "city_gate")
+            	time = 5;
+            else if(type === "shops" || type === "beauty" || type === "bakery" || type === "sugar" || type === "ice_cream" || type === "park")
+            	time = 10;
+            else if(type === "ruins" || type === "church" || type === "place_of_worship" || type === "books" || type === "games" || type === "supermarket" || type === "pub" || type === "bar" || type === "biergarten" || type === "cafe")
+            	time = 15;
+            else if(type === "art" || type === "archaeological_site" || type === "fast_food")
+            	time = 30;
+            else if(type === "castle" || type === "museum" || type === "restaurant")
+            	time = 45;
+
+            //IF TETE D'OR 
+            if(name === "Parc de la Tête d'Or")
+            	time = 60;
+
+            //CREATE NODE
+            n = new algo.Node(long, lat, i, name, time);
             //console.log(n);
             data_set.push(n);
             //console.log();
@@ -155,15 +231,17 @@ app.get('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY
         //console.log(data_set); //contient tous les nodes
         console.log("*********************************************************************");
 
+       
+
         //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
         depart_node = new algo.Node(depart_long,depart_lat,0,"Depart");
-        arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0,"Arrivee");
+        arrivee_node = new algo.Node(arrivee_long,arrivee_lat,0,"Arrivee",0);
         data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
 
         //console.log(req.params.duree);
         algo.map.setData(data_set);  
         //console.log(algo.map); 
-        var path = algo.pathFinder.findPath(depart_node, arrivee_node, distance_parcours);
+        var path = algo.pathFinder.findPath(depart_node, arrivee_node, temps_parcours, vitesse);
         //console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
         
         console.log("Done");
@@ -185,11 +263,12 @@ var algo = algo || {};
 
 //--------------------------------------
 
-algo.Node = function (x, y, i=0,name) {
+algo.Node = function (x, y, i=0, name, t=2) {
     this.long = x;
     this.lat = y;
 
     this.interest = i;
+    this.travel_time = t;
     this.name = name;
     this.parent =null;
   
@@ -253,8 +332,8 @@ algo.map = {
         return this.data;
     },
 
-    getHerustic: function (current_node, target_node, d_max) {
-        return target_node.interest*(1-(_private.distanceG(current_node, target_node)/d_max)*(_private.distanceG(current_node, target_node)/d_max));
+    getHerustic: function (current_node, target_node, t_max, spd) {
+        return target_node.interest*(1-(_private.distanceG(current_node, target_node)*spd/t_max)*(_private.distanceG(current_node, target_node)*spd/t_max));
     }
 };
 
@@ -273,7 +352,7 @@ algo.pathFinder = {
     open: [],
 
     // Maximum time before shutting down a closed path
-    dist: 0,
+    time: 0,
 
     addOpen: function (node, parent=null) {
         node.parent = parent;
@@ -299,11 +378,11 @@ algo.pathFinder = {
         return false;
     },
 
-    // Get the highest herustic node in the open set
-    getBestOpen: function (current_node, d_max) {
+    // Get the highest interest node in the open set
+    getBestOpen: function (current_node, t_max, spd) {
         var bestNode = 0;
         for (var i = 0; i < this.open.length; i++) {
-            if (algo.map.getHerustic(current_node, this.open[i], d_max) > algo.map.getHerustic(current_node, this.open[bestNode], d_max)) bestNode = i;
+            if (algo.map.getHerustic(current_node, this.open[i], t_max, spd) > algo.map.getHerustic(current_node, this.open[bestNode], t_max, spd)) bestNode = i;
         }
 
         return this.open[bestNode];
@@ -324,7 +403,7 @@ algo.pathFinder = {
         return false;
     }, 
 
-    findPath: function (current_node, target_node, d_max) {     
+    findPath: function (current_node, target_node, t_max, spd) {     
         var current,
             best;
 
@@ -334,17 +413,24 @@ algo.pathFinder = {
         //Initiate the first node
         current = current_node;
 
-        while(this.open.length !== 0 || this.dist < d_max) {
-            best = this.getBestOpen(current,d_max);
+        while(this.open.length !== 0 || this.time < t_max) {
+            best = this.getBestOpen(current, t_max, spd);
             //console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
 
             if(best.long === target_node.long && best.lat === target_node.lat)
-                return [this.buildPath(best, []), this.time + _private.distanceG(current,best)];
+            {
+                //return [this.buildPath(best, []), this.time + _private.distanceG(current,best)];
+            	return [best, this.time + _private.distanceG(current,best)/spd + best.travel_time];
+            }
 
-            if(this.dist + _private.distanceG(current, best) + _private.distanceG(best,target_node) <= d_max){
-                this.dist += _private.distanceG(current,best);
-                //console.log("new dist is : " + this.dist);
+            if(this.time + _private.distanceG(current, best)/spd + _private.distanceG(best,target_node)/spd + best.travel_time <= t_max){
+                this.time += _private.distanceG(current,best)/spd + best.travel_time;
+                console.log("==========");
+                console.log("new time is : " + this.time + " minutes");
+                console.log("from :" + current);
+                console.log("to :" + best);
+                console.log("==========");
                 current = best;
             }
             this.removeOpen(best);
@@ -353,6 +439,7 @@ algo.pathFinder = {
 
     },
 
+    /*
     // Recursive path buliding method
     buildPath: function (node, stack) {
         stack.push(node);
@@ -363,11 +450,12 @@ algo.pathFinder = {
             return stack;
         }
     },
+    */
 
     reset: function () {
         this.closed = [];
         this.open = algo.map.data;
-        this.dist = 0;
+        this.time = 0;
         return this;
     }
 };
