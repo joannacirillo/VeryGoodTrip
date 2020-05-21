@@ -45,10 +45,10 @@ passport.deserializeUser(function(id, cb) {
 
 const mongoose = require('mongoose');
 const Users = require('./users'); //import model for user authentification
-const Userpreferences = require('./user_preferences'); //model for user preferences
+const Userpreferences = require('./profiles'); //model for user preferences
 mongoose.set('debug', true);
 
-mongoose.connect('mongodb://localhost/DatabaseTMP',{useNewUrlParser:true});
+mongoose.connect('mongodb://localhost/pweb',{useNewUrlParser:true});
 
 
 let port = 8080;
