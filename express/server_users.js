@@ -2,8 +2,11 @@ const express = require('express');
 let app = express();
 const body = require('body-parser');
 app.use(body());
+const cors = require('cors');
+//app.use(body.urlencoded({ extended: true }));
 
 var crypto = require('crypto');
+app.use(cors());
 
 var passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy;
@@ -45,7 +48,7 @@ const Users = require('./users'); //import model for user authentification
 const Userpreferences = require('./user_preferences'); //model for user preferences
 mongoose.set('debug', true);
 
-mongoose.connect('mongodb://localhost/pweb',{useNewUrlParser:true});
+mongoose.connect('mongodb://localhost/DatabaseTMP',{useNewUrlParser:true});
 
 
 let port = 8080;
@@ -62,12 +65,12 @@ Users : login and sign up
 app.post('/signup',function(req,res){
 
     username = req.body.username;
+    //password = req.body.password;
     
     Users.findOne({username : username}, function(err,user){
         if(err) throw err;
         if(user==null){
-            var user_id = crypto.createHash('md5').update(req.body.username).digest('hex');
-            var password = crypto.createHash('md5').update(req.body.password).digest('hex');
+            var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
             Users.insertMany({username : req.body.username, user_id : user_id ,password : password});
             Userpreferences.insertMany({user_id : user_id});
             res.redirect('/success?username='+username);
