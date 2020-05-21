@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 const userScheme = mongoose.Schema({
-    user_id : Number,
-    username : String,
-    interests : [String],
-    culinary_pref : [String],
-    historical : [String],
-    disablity : Boolean
+    user_id : String,
+    cluster : Array,
+    interests : Array,
+    cuisine : Array,
+    historical : Array,
+    disability : Boolean,
+    previous : Array
 });
 
-module.exports = mongoose.model('profiles',userScheme);
+module.exports = mongoose.model('profiles',userScheme,'profiles');
