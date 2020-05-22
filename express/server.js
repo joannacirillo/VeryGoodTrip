@@ -4,8 +4,7 @@ const body = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Schemes = require('./places'); // on importe le modele
-const Profiles_Schemes = require('./profiles');
-const Users = require('./users'); //import model for user authentification
+
 mongoose.set('debug', true);
 
 
@@ -59,6 +58,10 @@ passport.deserializeUser(function(id, cb) {
     });
 });
 
+const Users = require('./users'); //import model for user authentification
+const Profiles_Schemes = require('./profiles'); //model for user preferences
+mongoose.set('debug', true);
+
 /*
 ----------------------------------------------------
 Users : login and sign up
@@ -67,14 +70,14 @@ Users : login and sign up
 app.post('/signup',function(req,res){
 
     username = req.body.username;
-    //password = req.body.password;
+    password = req.body.password;
     
     Users.findOne({username : username}, function(err,user){
         if(err) throw err;
         if(user==null){
             var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
             Users.insertMany({username : req.body.username, user_id : user_id ,password : password});
-            Userpreferences.insertMany({user_id : user_id});
+            Profiles_Schemes.insertMany({user_id : user_id});
             res.redirect('/success?username='+username);
         } else {
             res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
@@ -110,7 +113,7 @@ Users : preferences
 */
 
 app.post('/preferences/get',function(req,res){
-    Userpreferences.find({user_id : req.body.user_id},function(err,result){
+    Profiles_Schemes.find({user_id : req.body.user_id},function(err,result){
         if(err) throw err;
         res.send(result);
     })
@@ -125,7 +128,7 @@ app.put('/preferences/set',function(req,res){
     historical = req.body.historical;
     disability = req.body.disability;
 
-    Userpreferences.updateOne(
+    Profiles_Schemes.updateOne(
         {user_id : req.body.user_id,},
         {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
         $set : {disability : disability}}
