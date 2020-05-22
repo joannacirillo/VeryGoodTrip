@@ -104,47 +104,47 @@ app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:
     var id = req.params.id;
     if(id !== 0)
     {
-    	Profiles_Schemes.find({"user_id":id},{"_id":0,"interests":1, "culinary_pref":1, "disability":1}, function(err, res){
-    		if (err) throw err;
+        Profiles_Schemes.find({"user_id":id},{"_id":0,"interests":1, "culinary_pref":1, "disability":1}, function(err, res){
+            if (err) throw err;
 
-    		/*
-    		console.log(">>res");
-	        console.log(res);
-	        console.log(">>end of res");
-			*/
-			interests = res[0].interests; //liste des interets
+            /*
+            console.log(">>res");
+            console.log(res);
+            console.log(">>end of res");
+            */
+            interests = res[0].interests; //liste des interets
 
-			var culinary_pref_user = res[0].culinary_pref;
+            var culinary_pref_user = res[0].culinary_pref;
 
-			culinary_pref_user.forEach(function(c){
-				if(c === "Americain"){
-					//console.log("America fuck yeah!");
-					culinary_pref_bd.push("american","bagel","burger","steak_house");
-				}else if(c === "Asiatique"){
-					culinary_pref_bd.push("asian","korean","thai","vietnamese");
-				}else if(c === "Chinois"){
-					culinary_pref_bd.push("chinese");
-				}else if(c === "Friterie"){
-					culinary_pref_bd.push("belgian");
-				}else if(c === "Italien"){
-					culinary_pref_bd.push("italian","pizza");
-				}else if(c === "Japonais"){
-					culinary_pref_bd.push("japanese","sushi");
-				}else if(c === "Mexicain"){
-					culinary_pref_bd.push("mexican");
-				}else if(c === "Oriental"){
-					culinary_pref_bd.push("african","indian","lebanese","maghreb","tunisian","turkish");
-				}else if(c === "Poissons"){
-					culinary_pref_bd.push("mediterranean","sea_food");
-				}else if(c === "Regional"){
-					culinary_pref_bd.push("bistro","brasserie","french","regional");
-				}else if(c === "Sandwich"){
-					culinary_pref_bd.push("greek","kebab","sandwich","spanish","tacos","tapas");
-				}else if(c === "Vegetarien"){
-					culinary_pref_bd.push("salad","vegetarian;vegan");
-				}
-			});
-    	});
+            culinary_pref_user.forEach(function(c){
+                if(c === "Americain"){
+                    //console.log("America fuck yeah!");
+                    culinary_pref_bd.push("american","bagel","burger","steak_house");
+                }else if(c === "Asiatique"){
+                    culinary_pref_bd.push("asian","korean","thai","vietnamese");
+                }else if(c === "Chinois"){
+                    culinary_pref_bd.push("chinese");
+                }else if(c === "Friterie"){
+                    culinary_pref_bd.push("belgian");
+                }else if(c === "Italien"){
+                    culinary_pref_bd.push("italian","pizza");
+                }else if(c === "Japonais"){
+                    culinary_pref_bd.push("japanese","sushi");
+                }else if(c === "Mexicain"){
+                    culinary_pref_bd.push("mexican");
+                }else if(c === "Oriental"){
+                    culinary_pref_bd.push("african","indian","lebanese","maghreb","tunisian","turkish");
+                }else if(c === "Poissons"){
+                    culinary_pref_bd.push("mediterranean","sea_food");
+                }else if(c === "Regional"){
+                    culinary_pref_bd.push("bistro","brasserie","french","regional");
+                }else if(c === "Sandwich"){
+                    culinary_pref_bd.push("greek","kebab","sandwich","spanish","tacos","tapas");
+                }else if(c === "Vegetarien"){
+                    culinary_pref_bd.push("salad","vegetarian;vegan");
+                }
+            });
+        });
     }
     
     //console.log(mongoose.connection.readyState);
@@ -198,27 +198,27 @@ app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:
             var cuisine = doc.properties.cuisine;
             var type = doc.properties.type;
             if(culinary_pref_bd.find(element => element === cuisine) !== undefined)
-            	i += 3;
+                i += 3;
             if(interests.find(element => element === type) !== undefined)
-            	i += 3;
+                i += 3;
 
             //GET TRAVEL TIME
             var time = 0;
             
             if(type === "memorial" || type === "monument" || type === "fountain" || type === "gate" || type === "bridge" || type === "building" || type === "city_gate")
-            	time = 5;
+                time = 5;
             else if(type === "shops" || type === "beauty" || type === "bakery" || type === "sugar" || type === "ice_cream" || type === "park")
-            	time = 10;
+                time = 10;
             else if(type === "ruins" || type === "church" || type === "place_of_worship" || type === "books" || type === "games" || type === "supermarket" || type === "pub" || type === "bar" || type === "biergarten" || type === "cafe")
-            	time = 15;
+                time = 15;
             else if(type === "art" || type === "archaeological_site" || type === "fast_food")
-            	time = 30;
+                time = 30;
             else if(type === "castle" || type === "museum" || type === "restaurant")
-            	time = 45;
+                time = 45;
 
             //IF TETE D'OR 
             if(name === "Parc de la Tête d'Or")
-            	time = 60;
+                time = 60;
 
             //CREATE NODE
             n = new algo.Node(long, lat, i, name, time);
@@ -405,6 +405,11 @@ algo.pathFinder = {
     findPath: function (current_node, target_node, t_max, spd) {     
         var current,
             best;
+        var allowed;
+
+        var has_snack = 0;
+        var has_food = 0;
+        var has_drink = 0;
 
         //Reset
         this.reset();
@@ -413,6 +418,7 @@ algo.pathFinder = {
         current = current_node;
 
         while(this.open.length !== 0 || this.time < t_max) {
+            allowed = true;
             best = this.getBestOpen(current, t_max, spd);
             //console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
@@ -420,17 +426,47 @@ algo.pathFinder = {
             if(best.long === target_node.long && best.lat === target_node.lat)
             {
                 //return [this.buildPath(best, []), this.time + _private.distanceG(current,best)];
-            	return [best, this.time + _private.distanceG(current,best)/spd + best.travel_time];
+                return [best, this.time + _private.distanceG(current,best)/spd + best.travel_time];
             }
 
             if(this.time + _private.distanceG(current, best)/spd + _private.distanceG(best,target_node)/spd + best.travel_time <= t_max){
-                this.time += _private.distanceG(current,best)/spd + best.travel_time;
-                console.log("==========");
-                console.log("new time is : " + this.time + " minutes");
-                console.log("from :" + current);
-                console.log("to :" + best);
-                console.log("==========");
-                current = best;
+                if(best.name != null){
+                    //CHECK REDUNDANT SNACKS
+                    if(best.name.search("Boulangerie") != -1 || best.name.search("Glacier") != -1 || best.name.search("Sucrerie") != -1){
+                        //console.log("BOULANGERIE!");
+                        if(has_snack > 0)
+                            allowed = false;
+                        has_snack++;
+                    }
+
+                    //CHECK REDUNDANT EATING PLACES
+                    if(best.name.search("Restaurant") != -1 || best.name.search("Cafe") != -1 || best.name.search("Fast food") != -1){
+                        //console.log("RESTO!");
+                        if(has_food > 0)
+                            allowed = false;
+                        has_food++;
+                    }
+
+                    //CHECK REDUNDANT DRINKING PLACES
+                    if(best.name.search("Boire") != -1 || best.name.search("Cafe") != -1 || best.name.search("Pub") != -1 || best.name.search("Bar") != -1){
+                        //console.log("BOIRE!");
+                        if(has_drink > 0)
+                            allowed = false;
+                        has_drink++;
+
+                    }
+                }   
+
+                //console.log(allowed);
+                if(allowed){
+                    this.time += _private.distanceG(current,best)/spd + best.travel_time;
+                    console.log("==========");
+                    console.log("new time is : " + this.time + " minutes");
+                    console.log("from :" + current);
+                    console.log("to :" + best);
+                    console.log("==========");
+                    current = best;
+                }
             }
             this.removeOpen(best);
         }
