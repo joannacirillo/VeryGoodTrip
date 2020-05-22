@@ -5,6 +5,7 @@ const body = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Schemes = require('./places'); // on importe le modele
+const Profiles_Schemes = require('./profiles');
 
 mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
 
