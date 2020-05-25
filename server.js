@@ -362,9 +362,10 @@ app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:
         //console.log(req.params.duree);
         algo.map.setData(data_set);  
         //console.log(algo.map); 
-        var path = algo.pathFinder.findPath(depart_node, arrivee_node, temps_parcours, vitesse);
-        //console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
-        
+
+        //CALCULTE PATH WITH ALL HERUSTICS
+        var path = algo.pathFinder.findAllPath(depart_node, arrivee_node, temps_parcours, vitesse);
+        //console.log(path);
         console.log("Done");
         res.send(path);
         });
@@ -453,9 +454,15 @@ algo.map = {
         return this.data;
     },
 
-    getHerustic: function (current_node, target_node, t_max, spd) {
+    getHeuristic1: function (current_node, target_node, t_max, spd) {
         return target_node.interest*(1-(_private.distanceG(current_node, target_node)*spd/t_max)*(_private.distanceG(current_node, target_node)*spd/t_max));
+    },
+
+    getHeuristic2: function (current_node, target_node, t_max, spd) {
+        return target_node.interest*(_private.distanceG(current_node, target_node)*spd/t_max);
     }
+
+
 };
 
 
@@ -500,10 +507,10 @@ algo.pathFinder = {
     },
 
     // Get the highest interest node in the open set
-    getBestOpen: function (current_node, t_max, spd) {
+    getBestOpen: function (current_node, t_max, spd, heuristic) {
         var bestNode = 0;
         for (var i = 0; i < this.open.length; i++) {
-            if (algo.map.getHerustic(current_node, this.open[i], t_max, spd) > algo.map.getHerustic(current_node, this.open[bestNode], t_max, spd)) bestNode = i;
+            if (heuristic(current_node, this.open[i], t_max, spd) > heuristic(current_node, this.open[bestNode], t_max, spd)) bestNode = i;
         }
 
         return this.open[bestNode];
@@ -524,7 +531,7 @@ algo.pathFinder = {
         return false;
     }, 
 
-    findPath: function (current_node, target_node, t_max, spd) {     
+    findPath: function (current_node, target_node, t_max, spd, heuristic) {     
         var current,
             best;
         var allowed;
@@ -541,7 +548,7 @@ algo.pathFinder = {
 
         while(this.open.length !== 0 || this.time < t_max) {
             allowed = true;
-            best = this.getBestOpen(current, t_max, spd);
+            best = this.getBestOpen(current, t_max, spd, heuristic);
             //console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
 
@@ -592,10 +599,18 @@ algo.pathFinder = {
             }
             this.removeOpen(best);
         }
-
-
     },
 
+
+    findAllPath: function(current_node, target_node, t_max, spd){
+        res = [];
+        f = [algo.map.getHeuristic1, algo.map.getHeuristic2];
+        for (fct of f){
+            var int = this.findPath(current_node, target_node, t_max, spd, fct);
+            res.push(int);
+        }
+        return res;
+    },
     /*
     // Recursive path buliding method
     buildPath: function (node, stack) {
@@ -611,7 +626,12 @@ algo.pathFinder = {
 
     reset: function () {
         this.closed = [];
-        this.open = algo.map.data;
+        this.open = [];
+        for(node of algo.map.data)
+        {
+            if(node != undefined)
+                this.open.push(new algo.Node(node.long, node.lat, node.interest, node.name, node.travel_time));
+        }
         this.time = 0;
         return this;
     }
