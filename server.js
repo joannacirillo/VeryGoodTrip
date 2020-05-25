@@ -1,12 +1,12 @@
 const express = require('express');
 const body = require('body-parser');
 
+
 const cors = require('cors');
 const mongoose = require('mongoose');
-const Places_Schemes = require('./places'); // on importe le modele
-
-mongoose.set('debug', true);
-
+const Places_Schemes = require('./places'); // on importe le modele places
+const Profiles_Schemes = require('./profiles'); // on importe le modele profiles
+const Users_Schemes = require('./users'); //import model for user authentification
 
 mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
 
@@ -58,9 +58,7 @@ passport.deserializeUser(function(id, cb) {
     });
 });
 
-const Users_Schemes = require('./users'); //import model for user authentification
-const Profiles_Schemes = require('./profiles'); //model for user preferences
-mongoose.set('debug', true);
+
 
 /*
 ----------------------------------------------------
@@ -71,22 +69,18 @@ app.post('/signup',function(req,res){
 
     username = req.body.username;
     password = req.body.password;
-
-    if(password!=null){
-        Users.findOne({username : username}, function(err,user){
-            if(err) throw err;
-            if(user==null){
-                var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
-                Users_Schemes.insertMany({username : req.body.username, user_id : user_id ,password : password});
-                Profiles_Schemes.insertMany({user_id : user_id});
-                res.redirect('/success?username='+username);
-            } else {
-                res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
-            }
-        })
-    } else {
-        res.send("Veuillez saisir un mot de passe !");
-    }
+    
+    Users_Schemes.findOne({username : username}, function(err,user){
+        if(err) throw err;
+        if(user==null){
+            var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
+            Users_Schemes.insertMany({username : req.body.username, user_id : user_id ,password : password});
+            Profiles_Schemes.insertMany({user_id : user_id});
+            res.redirect('/success?username='+username);
+        } else {
+            res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
+        }
+    })
 });
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/error' }),function(req, res) {
@@ -128,13 +122,13 @@ app.put('/preferences/set',function(req,res){
     
     cluster = req.body.cluster;
     interests = req.body.interests;
-    culinary_pref = req.body.culinary_pref;
+    cuisine = req.body.cuisine;
     historical = req.body.historical;
     disability = req.body.disability;
 
     Profiles_Schemes.updateOne(
         {user_id : req.body.user_id,},
-        {$set : {cluster : cluster, interests : interests, culinary_pref : culinary_pref, historical : historical},
+        {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
         $set : {disability : disability}}
         ,function(err){
             if(err) throw err;
@@ -143,6 +137,7 @@ app.put('/preferences/set',function(req,res){
     );
     
 });
+
 
 
 
