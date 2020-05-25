@@ -128,13 +128,13 @@ app.put('/preferences/set',function(req,res){
     
     cluster = req.body.cluster;
     interests = req.body.interests;
-    cuisine = req.body.cuisine;
+    culinary_pref = req.body.culinary_pref;
     historical = req.body.historical;
     disability = req.body.disability;
 
     Userpreferences.updateOne(
         {user_id : req.body.user_id,},
-        {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
+        {$set : {cluster : cluster, interests : interests, culinary_pref : culinary_pref, historical : historical},
         $set : {disability : disability}}
         ,function(err){
             if(err) throw err;
