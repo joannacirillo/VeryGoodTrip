@@ -8,7 +8,7 @@ const Schemes = require('./places'); // on importe le modele
 mongoose.set('debug', true);
 
 
-mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
+mongoose.connect('mongodb://localhost:27017/DatabaseTMP', {useNewUrlParser:true}); //ici changer le nom de la DB
 
 
 let app = express();
@@ -59,7 +59,7 @@ passport.deserializeUser(function(id, cb) {
 });
 
 const Users = require('./users'); //import model for user authentification
-const Profiles_Schemes = require('./profiles'); //model for user preferences
+const Userpreferences = require('./profiles'); //model for user preferences
 mongoose.set('debug', true);
 
 /*
@@ -71,18 +71,22 @@ app.post('/signup',function(req,res){
 
     username = req.body.username;
     password = req.body.password;
-    
-    Users.findOne({username : username}, function(err,user){
-        if(err) throw err;
-        if(user==null){
-            var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
-            Users.insertMany({username : req.body.username, user_id : user_id ,password : password});
-            Profiles_Schemes.insertMany({user_id : user_id});
-            res.redirect('/success?username='+username);
-        } else {
-            res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
-        }
-    })
+
+    if(password!=null){
+        Users.findOne({username : username}, function(err,user){
+            if(err) throw err;
+            if(user==null){
+                var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
+                Users.insertMany({username : req.body.username, user_id : user_id ,password : password});
+                Userpreferences.insertMany({user_id : user_id});
+                res.redirect('/success?username='+username);
+            } else {
+                res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
+            }
+        })
+    } else {
+        res.send("Veuillez saisir un mot de passe !");
+    }
 });
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/error' }),function(req, res) {
@@ -113,7 +117,7 @@ Users : preferences
 */
 
 app.post('/preferences/get',function(req,res){
-    Profiles_Schemes.find({user_id : req.body.user_id},function(err,result){
+    Userpreferences.find({user_id : req.body.user_id},function(err,result){
         if(err) throw err;
         res.send(result);
     })
@@ -128,7 +132,7 @@ app.put('/preferences/set',function(req,res){
     historical = req.body.historical;
     disability = req.body.disability;
 
-    Profiles_Schemes.updateOne(
+    Userpreferences.updateOne(
         {user_id : req.body.user_id,},
         {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
         $set : {disability : disability}}
