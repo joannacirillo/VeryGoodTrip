@@ -173,11 +173,11 @@ app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:
     //GET VITESSE
     var vitesse = 0;
     if(req.params.transport == "VELO"){
-        vitesse = 0.25;
+        vitesse = 0.2;
     }else if(req.params.transport == "PIED"){
-        vitesse = 0.083;
+        vitesse = 0.05;
     }else if(req.params.transport == "VOITURE"){
-        vitesse = 0.417;
+        vitesse = 0.35;
     }
 
     //GET TEMPS
