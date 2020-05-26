@@ -10,28 +10,14 @@ const Users_Schemes = require('./users'); //import model for user authentificati
 
 mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
 
-var fs = require('fs'),
-  https = require('https'),
-  //express = require('express'),
-  app = express();
 
-
-//let app = express();
+let app = express();
 app.use(body());
 app.use(cors());
-//let port = 8080;
+let port = 8080;
 
-/*app.listen(port, () => {
+app.listen(port, () => {
     console.log('le serveur fonctionne')
-});*/
-https.createServer({
-  key: fs.readFileSync('newkey.pem'),
-  cert: fs.readFileSync('cert.pem')
-}, app).listen(443);
-
-app.get('/', function(req, res) {
-  res.header('Content-type', 'text/html');
-  return res.end('<h1>HTTPS WORKS!</h1>');
 });
 
 var crypto = require('crypto');
@@ -65,7 +51,7 @@ app.use(passport.session());
 passport.serializeUser(function(user, cb) {
     cb(null, user.id);
   });
-
+  
 passport.deserializeUser(function(id, cb) {
     User.findById(id, function(err, user) {
         cb(err, user);
@@ -139,7 +125,7 @@ app.post('/preferences/get',function(req,res){
 
 //Input from client : JSON containing all the preferences
 app.put('/preferences/set',function(req,res){
-
+    
     cluster = req.body.cluster;
     interests = req.body.interests;
     cuisine = req.body.cuisine;
@@ -155,7 +141,7 @@ app.put('/preferences/set',function(req,res){
             res.send("Préférences mises à jour !");
         }
     );
-
+    
 });
 
 
@@ -211,7 +197,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
     for(c=1;c<10;c++)
     {
         var clusterVal = 0;
-
+        
         if(object[c]==="CITY"){
             clusterVal = req.params.CITY;
         }else if(object[c]==="CULTURE"){
@@ -288,7 +274,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
             });
         });
     }
-
+    
     //console.log(mongoose.connection.readyState);
 
     Places_Schemes.find({$and:[{"geometry.coordinates": {
@@ -306,7 +292,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
         console.log(result);
         console.log(">>end of result");
         */
-
+        
         //Setting points for the calculation
         result.forEach(function(doc){
 
@@ -329,7 +315,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
             }else if(doc.type=="SNACKS"){
                 clusterVal = req.params.SNACKS;
             }
-
+            
             //GET COORD
             var long = doc.geometry.coordinates[0];
             var lat = doc.geometry.coordinates[1];
@@ -346,7 +332,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
 
             //GET TRAVEL TIME
             var time = 0;
-
+            
             if(type === "memorial" || type === "monument" || type === "fountain" || type === "gate" || type === "bridge" || type === "building" || type === "city_gate")
                 time = 5;
             else if(type === "shops" || type === "beauty" || type === "bakery" || type === "sugar" || type === "ice_cream" || type === "park")
@@ -358,7 +344,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
             else if(type === "castle" || type === "museum" || type === "restaurant")
                 time = 45;
 
-            //IF TETE D'OR
+            //IF TETE D'OR 
             if(name === "Parc de la Tête d'Or")
                 time = 60;
 
@@ -367,12 +353,12 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
             //console.log(n);
             data_set.push(n);
             //console.log();
-
-        });
+            
+        }); 
         //console.log(data_set); //contient tous les nodes
         console.log("*********************************************************************");
 
-
+       
 
         //CALCUL du plus cours chemin de depart à arrivee, passant pas les points contenus dans result
         depart_node = new algo.Node(depart_long,depart_lat,0,"Depart");
@@ -380,13 +366,13 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
         data_set.push(arrivee_node); //on ajoute le point d'arrivee a la liste
 
         //console.log(req.params.duree);
-        algo.map.setData(data_set);
-        //console.log(algo.map);
+        algo.map.setData(data_set);  
+        //console.log(algo.map); 
 
         //CALCULTE PATH WITH ALL HERUSTICS
         var path = algo.pathFinder.findAllPath(depart_node, arrivee_node, temps_parcours, vitesse);
         //var path = algo.pathFinder.findPath(depart_node, arrivee_node, temps_parcours, vitesse, algo.map.getHeuristic1);
-
+        
         //console.log(path);
         console.log("Done");
         res.send(path);
@@ -415,7 +401,7 @@ algo.Node = function (x, y, i=0, name, t=2) {
     this.travel_time = t;
     this.name = name;
     this.parent =null;
-
+  
 };
 
 //--------------------------------------
@@ -432,14 +418,14 @@ var _private = {
         var dx = Math.abs(target.long - current.long), dy = Math.abs(target.lat - current.lat);
         return dx + dy;
     },
-
+    
     //Geographical distance
     distanceG: function (current, target){
         var dx = target.long-current.long;
-        return Math.acos(Math.sin(this.radians(current.lat))*Math.sin(this.radians(target.lat)) +
+        return Math.acos(Math.sin(this.radians(current.lat))*Math.sin(this.radians(target.lat)) + 
             Math.cos(this.radians(current.lat))*Math.cos(this.radians(target.lat)) * Math.cos(this.radians(dx)))*6371;
     },
-
+    
     radians: function(degrees){
         var pi = Math.PI;
         return degrees * (pi/180);
@@ -498,7 +484,7 @@ algo.pathFinder = {
     // Visited nodes
     closed: [],
 
-    // Available nodes
+    // Available nodes 
     open: [],
 
     // Maximum time before shutting down a closed path
@@ -551,9 +537,9 @@ algo.pathFinder = {
         }
 
         return false;
-    },
+    }, 
 
-    findPath: function (current_node, target_node, t_max, spd, heuristic) {
+    findPath: function (current_node, target_node, t_max, spd, heuristic) {     
         var current,
             best;
         var allowed;
@@ -606,7 +592,7 @@ algo.pathFinder = {
                         has_drink++;
 
                     }
-                }
+                }   
 
                 //console.log(allowed);
                 if(allowed){
