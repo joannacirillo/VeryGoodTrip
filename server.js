@@ -28,7 +28,7 @@ var passport = require('passport')
 
   passport.use(new LocalStrategy(
     function(username, password, done) {
-        Users.findOne({username : username}, function(err, user) {
+        Users_Schemes.findOne({username : username}, function(err, user) {
             if (err) {
                 return done(err);
             }
@@ -73,7 +73,7 @@ app.post('/signup',function(req,res){
     password = req.body.password;
 
     if(password!=null){
-        Users.findOne({username : username}, function(err,user){
+        Users_Schemes.findOne({username : username}, function(err,user){
             if(err) throw err;
             if(user==null){
                 var user_id = crypto.createHash('sha256').update(req.body.username).digest('hex');
@@ -81,7 +81,7 @@ app.post('/signup',function(req,res){
                 Profiles_Schemes.insertMany({user_id : user_id});
                 res.redirect('/success?username='+username);
             } else {
-                res.send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
+                res.status(403).send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
             }
         })
     } else {
@@ -152,7 +152,7 @@ get sur la BD pour récupérer coord + val_intérêt
 ----------------------------------------------------
 */
 
-app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair/:transport', function(req, res) { // création de la route sous le verbe get
+app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CITY/:CULTURE/:DRINK/:EAT/:HISTORICAL/:NATURE/:RELIGIOUS/:SHOPPING/:SNACKS/:wheelchair/:transport', function(req, res) { // création de la route sous le verbe get
     //mongoose.set('debug', true);
     array = [];
     type = null;
@@ -228,8 +228,8 @@ app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:
     var interests = [];
     var culinary_pref_bd = []; //liste des mangers
     //Ici on affine les données en fonction des pref utilisateurs
-    var id = req.params.id;
-    if(id !== 0)
+    var id = req.body.id;
+    if(id != 1)
     {
         Profiles_Schemes.find({"user_id":id},{"_id":0,"interests":1, "culinary_pref":1, "disability":1}, function(err, res){
             if (err) throw err;
