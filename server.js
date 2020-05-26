@@ -166,16 +166,6 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
 
     //console.log(mongoose.connection.readyState);
 
-    //borne du rectangle de sélection des centres d'interet
-    borne_inf_long = Math.min(depart_long, arrivee_long) - 0.003;
-    //console.log(borne_inf_long);
-    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - 0.003;
-    //console.log(borne_inf_lat);
-    borne_sup_long = Math.max(depart_long, arrivee_long) + 0.003;
-    //console.log(borne_sup_long);
-    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + 0.003;
-    //console.log(borne_sup_lat);
-
     //GET VITESSE
     var vitesse = 0;
     if(req.params.transport == "VELO"){
@@ -188,6 +178,21 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
 
     //GET TEMPS
     var temps_parcours = req.params.duree;
+    var distance_parcours = temps_parcours*vitesse;
+    var distance = Math.sqrt((depart_long-arrivee_long)*(depart_long-arrivee_long) + (depart_lat-arrivee_lat)*(depart_lat-arrivee_lat));
+    
+    
+    //borne du rectangle de sélection des centres d'interet
+    borne_inf_long = Math.min(depart_long, arrivee_long) - (distance_parcours-distance)/2;
+    //console.log(borne_inf_long);
+    borne_inf_lat = Math.min(depart_lat, arrivee_lat) - (distance_parcours*distance_parcours - distance*distance)/2*distance_parcours;
+    //console.log(borne_inf_lat);
+    borne_sup_long = Math.max(depart_long, arrivee_long) + (distance_parcours-distance)/2;
+    //console.log(borne_sup_long);
+    borne_sup_lat = Math.max(depart_lat, arrivee_lat) + (distance_parcours*distance_parcours - distance*distance)/2*distance_parcours;
+    //console.log(borne_sup_lat);
+
+    
 
 
     const object = {1:"CITY",2:"CULTURE",3:"DRINK",4:"EAT",5:"HISTORICAL",6:"NATURE",7:"RELIGIOUS",8:"SHOPPING",9:"SNACKS"};
