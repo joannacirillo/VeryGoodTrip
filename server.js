@@ -125,17 +125,17 @@ app.post('/preferences/get',function(req,res){
 
 //Input from client : JSON containing all the preferences
 app.put('/preferences/set',function(req,res){
-    
-    cluster = req.body.cluster;
+
     interests = req.body.interests;
-    cuisine = req.body.cuisine;
+    cuisine = req.body.culinary_pref;
     historical = req.body.historical;
     disability = req.body.disability;
 
     Profiles_Schemes.updateOne(
         {user_id : req.body.user_id,},
-        {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
-        $set : {disability : disability}}
+        {$set : {interests : interests, cuisine : cuisine, historical : historical},
+        $set : {disability : disability}},
+        {upsert : true}
         ,function(err){
             if(err) throw err;
             res.send("Préférences mises à jour !");
@@ -230,7 +230,7 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
     var culinary_pref_bd = []; //liste des mangers
     //Ici on affine les données en fonction des pref utilisateurs
     var id = req.body.id;
-    if(id != 1)
+    if(id != 0)
     {
         Profiles_Schemes.find({"user_id":id},{"_id":0,"interests":1, "culinary_pref":1, "disability":1}, function(err, res){
             if (err) throw err;
