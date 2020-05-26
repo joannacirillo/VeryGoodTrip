@@ -364,7 +364,9 @@ app.get('/:id/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:
         //console.log(algo.map); 
 
         //CALCULTE PATH WITH ALL HERUSTICS
-        var path = algo.pathFinder.findAllPath(depart_node, arrivee_node, temps_parcours, vitesse);
+        //var path = algo.pathFinder.findAllPath(depart_node, arrivee_node, temps_parcours, vitesse);
+        var path = algo.pathFinder.findPath(depart_node, arrivee_node, temps_parcours, vitesse, algo.map.getHeuristic1);
+        
         //console.log(path);
         console.log("Done");
         res.send(path);
