@@ -1,12 +1,12 @@
 const express = require('express');
 const body = require('body-parser');
 
+
 const cors = require('cors');
 const mongoose = require('mongoose');
-const Places_Schemes = require('./places'); // on importe le modele
-
-mongoose.set('debug', true);
-
+const Places_Schemes = require('./places'); // on importe le modele places
+const Profiles_Schemes = require('./profiles'); // on importe le modele profiles
+const Users_Schemes = require('./users'); //import model for user authentification
 
 mongoose.connect('mongodb://localhost:27017/pweb', {useNewUrlParser:true}); //ici changer le nom de la DB
 
@@ -58,9 +58,7 @@ passport.deserializeUser(function(id, cb) {
     });
 });
 
-const Users_Schemes = require('./users'); //import model for user authentification
-const Profiles_Schemes = require('./profiles'); //model for user preferences
-mongoose.set('debug', true);
+
 
 /*
 ----------------------------------------------------
@@ -71,6 +69,7 @@ app.post('/signup',function(req,res){
 
     username = req.body.username;
     password = req.body.password;
+
 
     if(password!=null){
         Users_Schemes.findOne({username : username}, function(err,user){
@@ -87,6 +86,7 @@ app.post('/signup',function(req,res){
     } else {
         res.send("Veuillez saisir un mot de passe !");
     }
+
 });
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/error' }),function(req, res) {
@@ -128,13 +128,13 @@ app.put('/preferences/set',function(req,res){
     
     cluster = req.body.cluster;
     interests = req.body.interests;
-    culinary_pref = req.body.culinary_pref;
+    cuisine = req.body.cuisine;
     historical = req.body.historical;
     disability = req.body.disability;
 
     Profiles_Schemes.updateOne(
         {user_id : req.body.user_id,},
-        {$set : {cluster : cluster, interests : interests, culinary_pref : culinary_pref, historical : historical},
+        {$set : {cluster : cluster, interests : interests, cuisine : cuisine, historical : historical},
         $set : {disability : disability}}
         ,function(err){
             if(err) throw err;
@@ -143,6 +143,7 @@ app.put('/preferences/set',function(req,res){
     );
     
 });
+
 
 
 
@@ -178,11 +179,11 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
     //GET VITESSE
     var vitesse = 0;
     if(req.params.transport == "VELO"){
-        vitesse = 0.25;
+        vitesse = 0.2;
     }else if(req.params.transport == "PIED"){
-        vitesse = 0.083;
+        vitesse = 0.05;
     }else if(req.params.transport == "VOITURE"){
-        vitesse = 0.417;
+        vitesse = 0.35;
     }
 
     //GET TEMPS
@@ -367,9 +368,12 @@ app.post('/:depart_long/:depart_lat/:arrivee_long/:arrivee_lat/:date/:duree/:CIT
         //console.log(req.params.duree);
         algo.map.setData(data_set);  
         //console.log(algo.map); 
-        var path = algo.pathFinder.findPath(depart_node, arrivee_node, temps_parcours, vitesse);
-        //console.log(path); //ici le chemin (a traiter pour remonter dans la bd)
+
+        //CALCULTE PATH WITH ALL HERUSTICS
+        var path = algo.pathFinder.findAllPath(depart_node, arrivee_node, temps_parcours, vitesse);
+        //var path = algo.pathFinder.findPath(depart_node, arrivee_node, temps_parcours, vitesse, algo.map.getHeuristic1);
         
+        //console.log(path);
         console.log("Done");
         res.send(path);
         });
@@ -458,9 +462,15 @@ algo.map = {
         return this.data;
     },
 
-    getHerustic: function (current_node, target_node, t_max, spd) {
+    getHeuristic1: function (current_node, target_node, t_max, spd) {
         return target_node.interest*(1-(_private.distanceG(current_node, target_node)*spd/t_max)*(_private.distanceG(current_node, target_node)*spd/t_max));
+    },
+
+    getHeuristic2: function (current_node, target_node, t_max, spd) {
+        return target_node.interest*(_private.distanceG(current_node, target_node)*spd/t_max);
     }
+
+
 };
 
 
@@ -505,10 +515,10 @@ algo.pathFinder = {
     },
 
     // Get the highest interest node in the open set
-    getBestOpen: function (current_node, t_max, spd) {
+    getBestOpen: function (current_node, t_max, spd, heuristic) {
         var bestNode = 0;
         for (var i = 0; i < this.open.length; i++) {
-            if (algo.map.getHerustic(current_node, this.open[i], t_max, spd) > algo.map.getHerustic(current_node, this.open[bestNode], t_max, spd)) bestNode = i;
+            if (heuristic(current_node, this.open[i], t_max, spd) > heuristic(current_node, this.open[bestNode], t_max, spd)) bestNode = i;
         }
 
         return this.open[bestNode];
@@ -529,7 +539,7 @@ algo.pathFinder = {
         return false;
     }, 
 
-    findPath: function (current_node, target_node, t_max, spd) {     
+    findPath: function (current_node, target_node, t_max, spd, heuristic) {     
         var current,
             best;
         var allowed;
@@ -546,7 +556,7 @@ algo.pathFinder = {
 
         while(this.open.length !== 0 || this.time < t_max) {
             allowed = true;
-            best = this.getBestOpen(current, t_max, spd);
+            best = this.getBestOpen(current, t_max, spd, heuristic);
             //console.log("best node is : " + best.long + " " + best.lat);
             best.parent = current;
 
@@ -597,10 +607,18 @@ algo.pathFinder = {
             }
             this.removeOpen(best);
         }
-
-
     },
 
+
+    findAllPath: function(current_node, target_node, t_max, spd){
+        res = [];
+        f = [algo.map.getHeuristic1, algo.map.getHeuristic2];
+        for (fct of f){
+            var int = this.findPath(current_node, target_node, t_max, spd, fct);
+            res.push(int);
+        }
+        return res;
+    },
     /*
     // Recursive path buliding method
     buildPath: function (node, stack) {
@@ -616,7 +634,12 @@ algo.pathFinder = {
 
     reset: function () {
         this.closed = [];
-        this.open = algo.map.data;
+        this.open = [];
+        for(node of algo.map.data)
+        {
+            if(node != undefined)
+                this.open.push(new algo.Node(node.long, node.lat, node.interest, node.name, node.travel_time));
+        }
         this.time = 0;
         return this;
     }
