@@ -94,7 +94,7 @@ app.post('/signup',function(req,res){
                 Profiles_Schemes.insertMany({user_id : user_id});
                 res.redirect('/success?username='+username);
             } else {
-                res.status(403).send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
+                res.status(401).send("Nom d'utilisateur déjà utilisé, veuillez en saisir un autre.");
             }
         })
     } else {
